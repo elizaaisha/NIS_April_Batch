@@ -1,0 +1,245 @@
+---
+title: "Urban-Rural Disparities in Stroke Management and Outcomes Among Patients with Atrial Fibrillation"
+subtitle: "Analysis for RCOP group NIS-Sep-Cardio5"
+author:
+  - name: Eliza Aisha
+    email: elizaaisha1@gmail.com
+    orcid: 0009-0007-7592-176X
+    affiliations: 
+      - id: DMC
+        name: Dow University of Health Sciences
+        department: Department of Medicine
+---
+
+
+```{r}
+#| label: libraries_setup
+#| include: false
+
+# Load libraries
+library(rmarkdown)
+library(knitr)
+library(yaml)
+library(tidyverse)
+library(arrow)
+library(survey)
+library(gtsummary)
+
+# Load external dependencies
+source("./scripts/labels.R")
+
+```
+
+```{r}
+#| label: data_setup
+#| include: false
+#| cache: false
+
+ # Global options
+ TESTING <- F
+
+ #Import data
+ if (TESTING) {
+   dta <- arrow::open_dataset("./nis_data/NIS_Stroke_Afib_Urban_testing.parquet") |> collect()
+ } else {
+   dta <- arrow::open_dataset("./nis_data/NIS_Stroke_Afib_Urban.parquet/") |> collect()
+ }
+
+ # Set factor references
+dta <- dta |>
+  mutate(
+    Insurance = fct_relevel(Insurance, "Private"),
+    RACE = fct_relevel(RACE, "White"),
+    DIED = as.factor(DIED),
+    LOS = as.numeric(LOS),
+    ICH = as.factor(ICH),
+    PL_NCHS = fct_relevel(PL_NCHS, "Rural"),
+    MT = as.factor(MT)
+  )
+
+# Set survey options for lonely PSUs
+options(survey.lonely.psu = "adjust")
+options(survey.adjust.domain.lonely = TRUE)
+
+# Define survey design
+dsgn <- svydesign(
+  id = ~ HOSPID,
+  strata = ~ NIS_STRATUM,
+  weights = ~ TRENDWT,
+  data = dta,
+  nest = TRUE
+)
+
+# Subset data for specific condition
+dsgn <- subset(dsgn, Stroke == "Yes" & A_Fib == "Yes" & !is.na(PL_NCHS))
+
+# Clean up memory
+rm(dta)
+gc()
+
+
+```
+
+## Preamble:
+
+-   **Study Objective**: Examine impact of urbanization (urban vs. rural) on stroke management and outcomes among inpatient admissions with atrial fibrillation.
+
+-   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020.
+
+-   **Patient Selection**: Included all inpatient admissions with a principal diagnosis of Stroke.
+
+-   **Outcomes**:
+
+    -   In-hospital all-cause mortality
+
+    -   Utilization of mechanical thrombectomy
+
+    -   Intracranial hemorrhage
+
+    -   Total hospital length of stay (days)
+
+    -   Total charge, inflation adjusted to 2020 (\$)
+
+-   **Statistical Analysis**: Multiple logistic and linear regression to determine the independent association of household income and insurance status with in-hospital mortality, utilization of mechanical thrombectomy, intracranial hemorrhage, length of stay and total charges (inflation adjusted), respectively, adjusted for:
+
+    -   Demographics: Age, sex, race, residential income, insurance, hospital region, hospital bedsize, hospital location, and teaching status.
+
+    -   Medical History: Hypertension, diabetes mellitus, hyperlipidemia, coronary artery disease, peripheral vascular disease, heart failure, chronic kidney disease, chronic obstructive pulmonary disease, dementia, liver disease, fluid/electrolyte imbalance, obesity, prior stroke, prior cardiac surgery, presence of pacemaker/defibrillator.
+
+    -   Comorbidities: Charlson comorbidity index.
+
+-   **Software:** All analyses were performed using R Version 4.4.1 (R Foundation for Statistical Computing, Vienna, Austria)
+
+## Baseline Table:
+
+```{r}
+#| label: baseline
+
+# Create baseline table
+tbl_svybaseline <- dsgn %>%
+  tbl_svysummary(
+    by = PL_NCHS,
+    include = baseline_var,
+    label = baseline_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_p() %>%
+  add_overall()
+
+# Print baseline table
+tbl_svybaseline
+
+```
+
+## Outcomes Table:
+
+```{r}
+#| label: outcomes_table
+
+# Create outcomes table
+tbl_svyoutcomes <- dsgn %>%
+  tbl_svysummary(
+    by = PL_NCHS,
+    include = outcome_var,
+    label = outcome_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_p()
+
+# Print outcomes table
+tbl_svyoutcomes
+
+```
+
+## Multivariable Logistic Regression:
+
+### All-Cause Mortality:
+
+```{r}
+#| label: reg_all_cause_mortality
+
+# Create the regression model
+reg_model_died <- svyglm(
+  DIED ~ PL_NCHS + ZIPINC_QRTL + Insurance + AGE + FEMALE + RACE + charlindex + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Fluid_disorders,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_died, exponentiate = T, label = reg_var_labels)
+
+``` 
+
+### Intracranial Hemorrhage:
+
+```{r}
+#| label: reg_ICH
+
+reg_model_ICH <- svyglm(
+  ICH ~ PL_NCHS + ZIPINC_QRTL + Insurance + AGE + FEMALE + RACE + charlindex + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Fluid_disorders,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_ICH, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Utilization of Mechanical Thrombectomy:
+
+```{r}
+#| label: reg_MT
+
+reg_model_MT <- svyglm(
+  MT ~ PL_NCHS + ZIPINC_QRTL + Insurance + AGE + FEMALE + RACE + charlindex + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Fluid_disorders,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_MT, exponentiate = T, label = reg_var_labels)
+```
+
+## Multivariable Linear Regression:
+
+### Length of Stay:
+
+```{r}
+#| label: reg_length_of_stay
+
+# Create the regression model
+reg_model_LOS <- svyglm(
+  LOS ~ PL_NCHS + ZIPINC_QRTL + Insurance + AGE + FEMALE + RACE + charlindex + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Fluid_disorders,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model_LOS, exponentiate = F, label = reg_var_labels)
+
+```
+
+### Inflation Adjusted Total Charge:
+
+```{r}
+#| label: reg_total_charge
+
+# Create the regression model for Total Charge (Inflation Adjusted)
+reg_model_TOTCHG <- svyglm(
+  adj_TOTCHG ~ PL_NCHS + ZIPINC_QRTL + Insurance + AGE + FEMALE + RACE + charlindex + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Fluid_disorders,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model_TOTCHG, exponentiate = F, label = reg_var_labels)
+
+```

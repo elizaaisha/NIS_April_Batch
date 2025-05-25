@@ -1,0 +1,10 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+#Remove from repository language stats
+*.html linguist-documentation=true
+*.css linguist-documentation=true
+*.scss linguist-documentation=true
+*.pdf linguist-documentation=true
+*.docx linguist-documentation=true
+*.tex linguist-documentation=true

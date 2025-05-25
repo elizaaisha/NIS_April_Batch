@@ -1,0 +1,20 @@
+project:
+  type: website
+  output-dir: docs
+  execute-dir: project
+
+website:
+  title: "NIS_HF_IDA"
+
+format:
+  html:
+    theme: litera
+    css: styles.css
+    toc: true
+  docx: default
+
+execute:
+  echo: false
+  warning: false
+  # enabled: false
+

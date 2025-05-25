@@ -1,0 +1,384 @@
+---
+title: "Utilization and Complications of Catheter Ablation Therapy for Cardiac Arrhythmias in Congenital Heart Disease: An Analysis of the National Inpatient Sample (NIS) Database"
+subtitle: "Analysis for RCOP NIS Cardio6"
+author:
+  - name: Muhammad Saad
+    email: msaadasif.md@gmail.com
+    orcid: 0000-0002-1792-2357
+    affiliations: 
+      - id: DMC
+        name: Dow University of Health Sciences
+        department: Department of Medicine
+---
+
+```{r}
+#| label: libraries_setup
+#| include: false
+
+# Load libraries
+library(tidyverse)
+library(arrow)
+library(survey)
+library(gtsummary)
+
+# Load external dependencies
+source("./scripts/labels.R")
+
+```
+
+```{r}
+#| label: data_setup
+#| include: false
+#| cache: false
+
+# Global options
+TESTING <- F
+
+#Import data
+if (TESTING) {
+  dta <- arrow::open_dataset("./nis_data/NIS_Sep_Cardio6_testing.parquet") |> collect()
+} else {
+  dta <- arrow::open_dataset("./nis_data/NIS_Sep_Cardio6.parquet/") |> collect()
+}
+
+# Set factor references
+dta <- dta |>
+  mutate(
+    Age_groups = fct_relevel(Age_groups, "18–44y", "45–59y", "60–74y", "≥75y"),
+    Insurance = fct_relevel(Insurance, "Private"),
+    RACE = fct_relevel(RACE, "White"),
+    DIED = fct_relevel(DIED, "No"),
+    LOS = as.numeric(LOS),
+    adj_TOTCHG = as.numeric(adj_TOTCHG),
+    Pericardial_Type = as.factor(Pericardial_Type),
+    Cardiac_Type = as.factor(Cardiac_Type),
+    Vascular_Type = as.factor(Vascular_Type),
+    Respiratory_Type = as.factor(Respiratory_Type),
+    Gastrointestinal_Type = as.factor(Gastrointestinal_Type),
+    Neuro_Complications = as.factor(Neuro_Complications),
+    Pericardial_Complications = as.factor(Pericardial_Complications),
+    Cardiac_Complications = as.factor(Cardiac_Complications),
+    Vascular_Complications = as.factor(Vascular_Complications),
+    Respiratory_Complications = as.factor(Respiratory_Complications),
+    Gastrointestinal_Complications = as.factor(Gastrointestinal_Complications),
+    Any_Complication = as.factor(Any_Complication),
+  )
+
+# Set survey options for lonely PSUs
+options(survey.lonely.psu = "adjust")
+options(survey.adjust.domain.lonely = TRUE)
+
+# Define survey design
+dsgn <- svydesign(
+  id = ~ HOSPID,
+  strata = ~ NIS_STRATUM,
+  weights = ~ TRENDWT,
+  data = dta,
+  nest = TRUE
+)
+
+# Subset data for specific condition
+dsgn <- subset(dsgn, CA_CHD == "CHD" & AGE >= 18 & PPM == "No" & ICD == "No" & Surg_Ablation == "No")
+
+# Set GTsummary theme
+theme_gtsummary_journal(journal = "jama")
+
+# Clean up memory
+rm(dta)
+gc()
+
+```
+
+## Preamble:
+
+-   **Reference Papers:**
+
+    -   [Rozen et al. 2020](https://www.ahajournals.org/doi/10.1161/JAHA.119.015721)
+
+    -   [Alhassan et al. 2023](https://www.ahajournals.org/doi/10.1161/JAHA.122.029339)
+
+    -   [Hosseini et al. 2017](https://linkinghub.elsevier.com/retrieve/pii/S2405500X17303924)
+
+-   **Study Objective**: Describe the utilization and outcomes of catheter ablation therapy for cardiac arrhythmias in patients with congenital heart disease (CHD) 
+
+-   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020.
+
+-   **Patient Selection**: Included all inpatient admissions for patients aged 18 years or older with CHD who underwent catheter ablation with atrial fibrillation, atrial flutter, supraventricular tachycardia, or ventricular tachycardia as the primary diagnosis. Excluded patients who underwent pacemaker implantation, implantable cardioverter-defibrillator insertion, or open surgical ablation during the same hospitalization to avoid confounding effects from these procedures.
+
+
+-   **Primary Outcomes**:
+
+    -   At least 1 Complication
+    
+    -   In-hospital all-cause mortality
+
+    -   Length of stay (days)
+
+    -   Inflation-adjusted total charge (\$)
+
+-   **Secondary Outcomes**:
+
+    -   Pericardial complications (Hemopericardium, Pericardial Effusion, Cardiac Tamponade, Pericardiocentesis, Acute Pericarditis)
+    -   Cardiac complications (Myocardial Injury, Myocardial Arrest, Myocardial Infarction, Postprocedural Heart Failure, Requiring Open Heart Surgery, Postcardiotomy Syndrome)
+    -   Vascular complications (Hemorrhage/Hematoma, Hemo-transfusion, Accidental Puncture, Vascular Injury, Fistulas/Aneurysms, Injury Requiring Surgical Repair)
+    -   Respiratory complications (Pneumothorax/Hemothorax, Diaphragmatic Paralysis, Postoperative Respiratory Failure)
+    -   Gastrointestinal complications (Esophageal Perforation, Esophageal Injury)
+    -   Neurological Complications
+
+-   **Statistical Analysis**: Multiple logistic regression model was used to evaluate predictors of complication rates including:
+
+    -   Demographics: Age, sex, race, residential income, insurance type, and admission type (elective vs. non-elective).
+
+    -   Medical History: Hypertension, obesity, obstructive sleep apnea, diabetes mellitus, chronic pulmonary disease, chronic kidney disease
+
+    -   Ablation-Related Factors: Indication for Ablation
+
+-   **Software:** All analyses were performed using R Version 4.4.1 (R Foundation for Statistical Computing, Vienna, Austria)
+
+## Baseline Table:
+
+```{r}
+#| label: baseline
+#| cache: false
+
+# Create baseline table
+tbl_svybaseline <- dsgn %>%
+  tbl_svysummary(
+    include = baseline_var,
+    label = baseline_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  )
+
+# Print baseline table
+tbl_svybaseline
+```
+
+## Outcomes Table:
+
+```{r}
+#| label: outcomes_table
+
+# Create outcomes table
+tbl_svyoutcomes <- dsgn %>%
+  tbl_svysummary(
+    include = outcome_var,
+    label = outcome_var_labels,
+    missing = "no"
+  )
+
+# Print outcomes table
+tbl_svyoutcomes
+
+```
+
+## Baseline Table of Patients With and Without Any Complications:
+
+```{r}
+#| label: baseline_by_complication
+
+# Create baseline table by complication
+tbl_svybaseline <- dsgn %>%
+  tbl_svysummary(
+    by = Any_Complication,
+    include = baseline_var,
+    label = baseline_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  )%>%
+  add_p()
+
+# Print baseline table
+tbl_svybaseline
+
+```
+
+## Multivariable Logistic Regression:
+
+### At least 1 Complication:
+
+```{r}
+#| label: reg_complication
+
+#Create the regression model
+reg_model <- svyglm(
+  Any_Complication ~ Age_groups + FEMALE + RACE + ZIPINC_QRTL + Insurance + ELECTIVE + Ablation_Type + Hypertension + Obese + OSA + Diabetes + CPD + CKD,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model, exponentiate = T, label = reg_var_labels)
+```
+
+
+<!-- ### All-Cause Mortality: -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_all_cause_mortality -->
+
+<!-- #Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   DIED ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+<!-- ``` -->
+
+<!-- ### Pericardial Complications -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_pericardial_complications -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   Pericardial_Complications ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+
+<!-- ``` -->
+
+<!-- ### Cardiac Complications -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_cardiac_complications -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   Cardiac_Complications ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+
+
+<!-- ``` -->
+
+<!-- ### Vascular Complications -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_vascular_complications -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   Vascular_Complications ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+
+<!-- ``` -->
+
+<!-- ### Respiratory Complications -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_respiratory_complications -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   Respiratory_Complications ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+
+<!-- ``` -->
+
+<!-- ### Gastrointestinal Complications -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_gastrointestinal_complications -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   Gastrointestinal_Complications ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+
+<!-- ``` -->
+
+<!-- ### Intra-/postprocedural cerebrovascular infarction -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_cerebrovascular_infarction -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   Cereb_Infarction ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+
+<!-- ``` -->
+
+<!-- ### Infections -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_infections -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   Infections ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "quasibinomial" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = T, label = reg_var_labels) -->
+
+<!-- ``` -->
+
+<!-- ## Multivariable Linear Regression: -->
+
+<!-- ### Length of Stay: -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_length_of_stay -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   LOS ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "gaussian" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = F, label = reg_var_labels) -->
+
+<!-- ``` -->
+
+<!-- ### Inflation Adjusted Total Charge: -->
+
+<!-- ```{r} -->
+<!-- #| label: reg_total_charge -->
+
+<!-- # Create the regression model -->
+<!-- reg_model <- svyglm( -->
+<!--   adj_TOTCHG ~ CA_CHD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + ELECTIVE + charlindex + Ablation_Type + Hypertension + Obese + OSA + Smoking + Diabetes + CPD + CKD + pStroke + PVD + pICD + pCRT, -->
+<!--   design = dsgn, -->
+<!--   family = "gaussian" -->
+<!-- ) -->
+
+<!-- # Print regression table -->
+<!-- tbl_regression(reg_model, exponentiate = F, label = reg_var_labels) -->
+<!-- ``` -->

@@ -1,0 +1,222 @@
+---
+title: "Outcomes in Heart Failure with Preserved vs. Reduced Ejection Fraction in Patients with Iron Deficiency Anemia (with propensity score matching)"
+author:
+  - name: Eliza Aisha
+    email: elizaaisha1@gmail.com
+    orcid: 0009-0007-7592-176X
+    affiliations: 
+      - id: DMC
+        name: Dow University of Health Sciences
+        department: Department of Medicine
+---
+
+
+```{r}
+#| label: libraries_setup
+#| include: false
+
+library(tidyverse)    # dplyr, ggplot2, forcats, etc.
+library(arrow)        # fast Parquet import
+library(MatchIt)      # propensity-score matching
+library(cobalt)       # balance diagnostics
+library(survey)       # complex-survey analysis
+library(gtsummary)    # publication-ready tables
+
+# Load external dependencies
+source("./scripts/labels.R")
+
+# Global options
+TESTING <- F
+
+#Import data
+if (TESTING) {
+  dta <- arrow::open_dataset("./data/NIS_HF_IDA_testing.parquet") |> collect()
+} else {
+  dta <- arrow::open_dataset("./data/NIS_HF_IDA_2.parquet/") |> collect()
+}
+
+ps_covars <- c("AGE","FEMALE","RACE","ZIPINC_QRTL","Insurance","Hosp_Census_Region","elixsum","HTN","Hyperlip","CAD","PVD","COPD","Dementia","OSA","Alcohol","Valv_HD","Fluid_disorders","Pacemaker","Obesity","CA","Malnutrition","pCardiacSurg","NIS_STRATUM","TRENDWT")
+
+dta <- dta %>%
+  filter(!is.na(HF_Categories) & !is.na(AGE) & !is.na(FEMALE) & !is.na(RACE) & !is.na(ZIPINC_QRTL) & !is.na(Insurance)
+         & !is.na(Hosp_Census_Region) & !is.na(HTN) & !is.na(Hyperlip) & !is.na(CAD)
+         & !is.na(PVD) & !is.na(COPD) & !is.na(Dementia) & !is.na(OSA) & !is.na(Alcohol)
+         & !is.na(Valv_HD) & !is.na(Dementia) & !is.na(CA) & !is.na(Fluid_disorders) & !is.na(Obesity) & !is.na(Pacemaker)
+         & !is.na(pMI) & !is.na(Malnutrition) & !is.na(pCardiacSurg))
+
+nis <- dta %>%
+  mutate(
+    # binary treatment indicator (factor with two levels)
+    treat = factor(
+      if_else(HF_Categories == "Heart failure with preserved ejection fraction", 1, 0),
+      levels = c(0, 1),
+      labels = c("Heart failure with reduced ejection fraction", "Heart failure with preserved ejection fraction")
+    ),
+    # reference levels & formats
+    Insurance = fct_relevel(Insurance, "Private"),
+    RACE      = fct_relevel(RACE, "White"),
+    DIED      = factor(DIED)
+  ) %>% drop_na(any_of(ps_covars))
+
+# --------------------------------------------------------------------------- #
+# 5.  Propensity-score matching (nearest‐neighbor, within strata)             #
+# --------------------------------------------------------------------------- #
+m.out <- matchit(
+  treat ~ AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + Hosp_Census_Region + elixsum + HTN + Hyperlip + CAD + PVD + COPD + Dementia + OSA + Alcohol +
+    Valv_HD + Fluid_disorders + Pacemaker + Obesity + CA + Obesity + Malnutrition + pCardiacSurg,
+  data       = nis,
+  method     = "nearest",
+  distance   = "glm",
+  exact      = ~ NIS_STRATUM,     # keep matches inside each stratum
+  caliper    = 0.20,
+  ratio      = 1,
+  s.weights  = ~ TRENDWT          # survey weight enters PS model
+)
+
+matched <- match.data(m.out) %>%
+  mutate(final_wt = weights * TRENDWT)  # `weights` is already present in `match.data(m.out)`
+
+options(survey.lonely.psu = "adjust")           # HCUP recommendation
+dsgn <- svydesign(
+  id      = ~HOSPID,
+  strata  = ~NIS_STRATUM,
+  weights = ~final_wt,
+  data    = matched,
+  nest    = TRUE
+)
+
+```
+
+## Preamble:
+
+-   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020.
+
+-   **Patient Selection**: Included all inpatient admissions with iron deficiency anemia.
+
+-   **HF Categories**:
+
+    -   Heart failure with reduced ejection fraction
+    
+    -   Heart failure with preserved ejection fraction
+
+-   **ICD Codes**:
+ 
+    -   HFrEF = I50.2 and I50.4
+    
+    -   HFpEF = I50.3
+    
+-   **Propensity score matching**:
+
+    -   Using R package MatchIt
+    
+    -   Nearest neighbor matching, caliper = 0.2, ratio = 1:1    
+
+-   **Outcomes**:
+
+    -   In-hospital all-cause mortality
+
+    -   Total hospital length of stay (days)
+
+    -   Total charge, inflation adjusted to 2020 (\$)
+
+-   **Software:** All analyses were performed using R Version 4.4.1 (R Foundation for Statistical Computing, Vienna, Austria)
+
+## Baseline Table:
+
+```{r}
+#| label: baseline_table
+#| cache: false
+
+# Create baseline table
+tbl_svybaseline <- dsgn %>%
+  tbl_svysummary(
+    by = HF_Categories,
+    include = baseline_var,
+    label = baseline_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_p()
+
+# Print baseline table
+tbl_svybaseline
+
+
+```
+
+## Outcomes Table:
+
+```{r}
+#| label: outcomes_table
+
+# Create outcomes table
+tbl_svyoutcomes <- dsgn %>%
+  tbl_svysummary(
+    by = HF_Categories,
+    include = outcome_var,
+    label = outcome_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_p()
+
+# Print outcomes table
+tbl_svyoutcomes
+
+```
+
+
+## Multivariable Logistic Regression:
+
+### All-Cause Mortality:
+
+```{r}
+#| label: reg_all_cause_mortality
+
+# Create the regression model for all cause mortality
+reg_model_died <- svyglm(
+  DIED ~ HF_Categories,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_died, exponentiate = T, label = reg_var_labels)
+```
+
+## Multivariable Linear Regression:
+
+### Length of Stay:
+
+```{r}
+#| label: reg_length_of_stay
+
+# Create the regression model
+reg_model_LOS <- svyglm(
+  LOS ~ HF_Categories,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model_LOS, exponentiate = F, label = reg_var_labels)
+
+```
+
+### Inflation Adjusted Total Charge:
+
+```{r}
+#| label: reg_total_charge
+
+# Create the regression model for Total Charge (Inflation Adjusted)
+reg_model_TOTCHG <- svyglm(
+  adj_TOTCHG ~ HF_Categories,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model_TOTCHG, exponentiate = F, label = reg_var_labels)
+
+```
+

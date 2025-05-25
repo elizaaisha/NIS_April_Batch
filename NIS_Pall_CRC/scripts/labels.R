@@ -1,0 +1,126 @@
+baseline_var <-
+  c(
+    "AGE",
+    "FEMALE",
+    "RACE",
+    "charlindex",
+    "ZIPINC_QRTL",
+    "Insurance",
+    "Hosp_Census_Region",
+    "HTN",
+    "DM",
+    "Hyperlip",
+    "CAD",
+    "PVD",
+    "CHF",
+    "CKD",
+    "COPD",
+    "Liver_Dis",
+    "OSA",
+    "Anemia",
+    "Alcohol",
+    "Obesity",
+    "pStroke",
+    "pCardiacSurg",
+    "Pacemaker_defib",
+    "Tobb"
+    )
+
+baseline_var_labels <- list(
+  AGE ~ "Age, y",
+  FEMALE ~ "Sex",
+  RACE ~ "Race",
+  charlindex ~ "Charlson comorbidity index",
+  ZIPINC_QRTL ~ "Residential income",
+  Insurance ~ "Expected primary payer",
+  Hosp_Census_Region ~ "Hospital region",
+  HTN ~ "Hypertension",
+  DM ~ "Diabetes mellitus",
+  Hyperlip~ "Hyperlipidemia",
+  CAD ~ "Coronary artery disease",
+  PVD ~ "Peripheral vascular disease",
+  CHF ~ "Heart failure",
+  CKD ~ "Chronic kidney disease",
+  COPD ~ "Chronic obstructive pulmonary disease",
+  Liver_Dis ~ "Liver disease",
+  OSA ~ "Obstructive sleep apnea",
+  Anemia ~ "Anemia",
+  Alcohol ~ "Alcohol use disorder",
+  Obesity ~ "Obesity",
+  # pStroke ~ "Prior stroke",
+  # pCardiacSurg ~ "Prior cardiac surgery",
+  # Pacemaker_defib ~ "Pacemaker/ICD",
+  Tobb ~ "Tobbacco use disorder"
+)
+
+outcome_var <- c(
+  "AGE",
+  "FEMALE",
+  "RACE",
+  "charlindex",
+  "ZIPINC_QRTL",
+  "Insurance",
+  "Hosp_Census_Region")
+
+outcome_var_labels <- list(
+  DIED ~ "Died during hospitalization",
+  LOS ~ "Length of stay (days)",
+  adj_TOTCHG ~ "Inflation-adjusted total charge ($)"
+)
+
+reg_var_labels <- list(
+  IE_Afib ~ "Atrial fibrillation categories",
+  AGE ~ "Age, y",
+  FEMALE ~ "Sex",
+  RACE ~ "Race",
+  charlindex ~ "Charlson comorbidity index",
+  ZIPINC_QRTL ~ "Residential income",
+  Insurance ~ "Expected primary payer",
+  Hosp_Census_Region ~ "Hospital region",
+  HTN ~ "Hypertension",
+  DM ~ "Diabetes mellitus",
+  Hyperlip~ "Hyperlipidemia",
+  CAD ~ "Coronary artery disease",
+  PVD ~ "Peripheral vascular disease",
+  CHF ~ "Heart failure",
+  CKD ~ "Chronic kidney disease",
+  COPD ~ "Chronic obstructive pulmonary disease",
+  Liver_Dis ~ "Liver disease",
+  OSA ~ "Obstructive sleep apnea",
+  Anemia ~ "Anemia",
+  Alcohol ~ "Alcohol use disorder",
+  Obesity ~ "Obesity",
+  Tobb ~ "Tobbacco use disorder"
+)
+
+
+#reg_var_labels <- list(
+# IE_Afib ~ "Atrial fibrillation categories",
+# AGE ~ "Age, y",
+# FEMALE ~ "Sex",
+# RACE ~ "Race",
+# charlindex ~ "Charlson comorbidity index",
+# ZIPINC_QRTL ~ "Residential income",
+# Insurance ~ "Expected primary payer",
+# Hosp_Census_Region ~ "Hospital region",
+# HOSP_BEDSIZE ~ "Hospital bedsize",
+# HOSP_LOCTEACH ~ "Hospital location and teaching status",
+# HTN ~ "Hypertension",
+# DM ~ "Diabetes mellitus",
+# Hyperlip~ "Hyperlipidemia",
+# CAD ~ "Coronary artery disease",
+# PVD ~ "Peripheral vascular disease",
+# CHF ~ "Heart failure",
+# CKD ~ "Chronic kidney disease",
+# COPD ~ "Chronic obstructive pulmonary disease",
+# Dementia ~ "Dementia",
+# Liver_Dis ~ "Liver disease",
+# OSA ~ "Obstructive sleep apnea",
+# Anemia ~ "Anemia",
+# Alcohol ~ "Alcohol use disorder",
+# Obesity ~ "Obesity",
+# pStroke ~ "Prior stroke",
+# pCardiacSurg ~ "Prior cardiac surgery",
+# Pacemaker_defib ~ "Pacemaker/ICD",
+# Tobb ~ "Tobbacco use disorder"
+# )

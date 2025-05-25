@@ -1,0 +1,218 @@
+---
+title: "Impact of BMI on In-Hospital Outcomes in Colorectal Cancer Patients"
+subtitle: "Analysis for RCOP NIS Gastro2"
+author:
+  - name: Eliza Aisha
+    email: elizaaisha1@gmail.com
+    affiliations: 
+      - id: DMC
+        name: Dow University of Health Sciences
+        department: Department of Medicine
+---
+
+
+```{r}
+#| label: libraries_setup
+#| include: false
+
+# Load libraries
+library(tidyverse)
+library(arrow)
+library(survey)
+library(gtsummary)
+library(cardx)
+library(broom.helpers)
+
+# Load external dependencies
+source("./scripts/labels.R")
+
+```
+
+```{r}
+#| label: data_setup
+#| include: false
+#| cache: false
+
+# Global options
+TESTING <- F
+
+# Import data
+if (TESTING) {
+  dta <- arrow::open_dataset("./nis_data/NIS_Gastro2_testing.parquet") |> collect()
+} else {
+  dta <- arrow::open_dataset("./nis_data/NIS_Gastro2.parquet/") |> collect()
+}
+
+# Set factor references
+dta <- dta |>
+  mutate(
+    BMI = fct_relevel(BMI, BMI_order),
+    DIED = fct_relevel(DIED, "No"),
+    LOS = as.numeric(LOS),
+    adj_TOTCHG = as.numeric(adj_TOTCHG)
+  )
+
+# Set survey options for lonely PSUs
+options(survey.lonely.psu = "adjust")
+options(survey.adjust.domain.lonely = TRUE)
+
+# Define survey design
+dsgn <- svydesign(
+  id = ~HOSPID,
+  strata = ~NIS_STRATUM,
+  weights = ~TRENDWT,
+  data = dta,
+  nest = TRUE
+)
+
+# Subset data for specific condition
+dsgn <- subset(dsgn, !is.na(Colo_Rect_CA) & !is.na(BMI))
+
+# Clean up memory
+rm(dta)
+gc()
+
+```
+
+## Preamble:
+
+-   **Reference Papers:**
+
+    -   [Salman et al. 2024](https://journals.lww.com/coronary-artery/abstract/9900/obesity_paradox_in_coronary_artery_disease_.331.aspx)
+    -   [Persaud et al.2019](https://www.ahajournals.org/doi/full/10.1161/STROKEAHA.119.024638)
+    -   [Sreenivasan et al. 2022](https://doi.org/10.1016/j.amjcard.2022.04.011)
+
+-   **Study Objective**: Examine the impact of body mass index (BMI) on outcomes among inpatient admissions with colorectal cancer.
+
+-   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020.
+
+-   **Patient Selection**: Included all inpatient admissions with colorectal cancer.
+
+-   **BMI Categories**:
+
+    -   Underweight: BMI ≤19.9 kg/m²
+
+    -   Normal Weight: BMI 20.0 to 24.9 kg/m²
+
+    -   Overweight: BMI 25.0 to 29.9 kg/m²
+
+    -   Class I Obesity: BMI 30.0 to 34.9 kg/m²
+
+    -   Class II Obesity: BMI 35.0 to 39.9 kg/m²
+
+    -   Class III Obesity: BMI ≥40.0 kg/m²
+
+-   **Outcomes**:
+
+    -   In-hospital all-cause mortality
+
+    -   Total hospital length of stay (days)
+
+    -   Total charge, inflation adjusted to 2020 (\$)
+
+-   **Statistical Analysis**: Multiple logistic and linear regression to determine the independent association of BMI categories with in-hospital mortality and length of stay, respectively, adjusted for:
+
+    -   Demographics: Age, sex, race, residential income, and insurance.
+
+    -   Medical History: Cardiac arrhythmia, Anemia, Cerebrovascular disease, Chronic kidney disease, Chronic obstructive pulmonary disease, Diabetes, Dementia, Heart failure, Hypertension, Hyperlipidemia, Myocardial infarction, Peripheral vascular disease, Rheumatoid disease, Valvular heart disease
+    
+    -   Comorbidities: Charlson comorbidity index.
+
+-   **Software:** All analyses were performed using R Version 4.4.1 (R Foundation for Statistical Computing, Vienna, Austria)
+
+## Baseline Table:
+
+```{r}
+#| label: baseline
+
+# Create baseline table
+tbl_svybaseline <- dsgn %>%
+  tbl_svysummary(
+    by = BMI,
+    include = baseline_var,
+    label = baseline_var_labels,
+    missing = "no"
+  ) %>%
+  add_p() |>
+  add_overall()
+
+# Print baseline table
+tbl_svybaseline
+
+```
+
+## Outcomes Table:
+
+```{r}
+#| label: outcomes_table
+
+# Create outcomes table
+tbl_svyoutcomes <- dsgn %>%
+  tbl_svysummary(
+    by = BMI,
+    include = outcome_var,
+    label = outcome_var_labels,
+    missing = "no"
+  ) %>%
+  add_p()
+
+# Print outcomes table
+tbl_svyoutcomes
+
+```
+
+## Multivariable Logistic Regression:
+
+### All-Cause Mortality:
+
+```{r}
+#| label: reg_all_cause_mortality
+
+#Create the regression model
+reg_model <- svyglm(
+  DIED ~ BMI + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + charlindex + Arrhythmia + Anemia + CEVD + CKD + COPD + DM + Dementia + HF + HTN + Hyperlip + MI + PVD + Rheumatoid + Valvular_Disease,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model, exponentiate = T, label = reg_var_labels)
+
+```
+
+## Multivariable Linear Regression:
+
+### Length of Stay:
+
+```{r}
+#| label: reg_length_of_stay
+
+# Create the regression model
+reg_model <- svyglm(
+  LOS ~ BMI + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + charlindex + Arrhythmia + Anemia + CEVD + CKD + COPD + DM + Dementia + HF + HTN + Hyperlip + MI + PVD + Rheumatoid + Valvular_Disease,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model, exponentiate = F, label = reg_var_labels)
+
+
+```
+
+### Inflation Adjusted Total Charge:
+
+```{r}
+#| label: reg_total_charge
+
+# Create the regression model
+reg_model <- svyglm(
+  adj_TOTCHG ~ BMI + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + charlindex + Arrhythmia + Anemia + CEVD + CKD + COPD + DM + Dementia + HF + HTN + Hyperlip + MI + PVD + Rheumatoid + Valvular_Disease,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model, exponentiate = F, label = reg_var_labels)
+
+```

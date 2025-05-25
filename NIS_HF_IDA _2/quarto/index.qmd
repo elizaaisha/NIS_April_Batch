@@ -1,0 +1,198 @@
+---
+title: "Outcomes in HFrEF vs HFpEF in Patients with Iron Deficiency Anemia"
+author:
+  - name: Eliza Aisha
+    email: elizaaisha1@gmail.com
+    orcid: 0009-0007-7592-176X
+    affiliations: 
+      - id: DMC
+        name: Dow University of Health Sciences
+        department: Department of Medicine
+---
+
+
+```{r}
+#| label: libraries_setup
+#| include: false
+
+# Load libraries
+library(tidyverse)
+library(arrow)
+library(survey)
+library(gtsummary)
+
+# Load external dependencies
+source("./scripts/labels.R")
+
+# Global options
+TESTING <- F
+
+#Import data
+if (TESTING) {
+  dta <- arrow::open_dataset("./data/NIS_HF_IDA_testing.parquet") |> collect()
+} else {
+  dta <- arrow::open_dataset("./data/NIS_HF_IDA_2.parquet/") |> collect()
+}
+
+# Set factor references
+dta <- dta |>
+  mutate(
+    HF_Categories = fct_relevel(HF_Categories, "Heart failure with preserved ejection fraction"),
+    Insurance = fct_relevel(Insurance, "Private"),
+    RACE = fct_relevel(RACE, "White"),
+    DIED = as.factor(DIED),
+    LOS = as.numeric(LOS)
+  )
+
+# Set survey options for lonely PSUs
+options(survey.lonely.psu = "adjust")
+options(survey.adjust.domain.lonely = TRUE)
+
+# Define survey design
+dsgn <- svydesign(
+  id = ~ HOSPID,
+  strata = ~ NIS_STRATUM,
+  weights = ~ TRENDWT,
+  data = dta,
+  nest = TRUE
+)
+
+
+# Subset data for specific condition
+dsgn <- subset(dsgn, IDA == "Yes" & !is.na(HF_Categories) & AGE > 18)
+
+# Clean up memory
+rm(dta)
+gc()
+
+```
+
+## Preamble:
+
+-   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020.
+
+-   **Patient Selection**: Included all inpatient admissions with Iron deficiency anemia.
+
+-   **HF Categories**:
+
+    -   Heart failure with reduced ejection fraction
+    
+    -   Heart failure with preserved ejection fraction
+
+-   **ICD Codes**:
+ 
+    -   HFrEF = I50.2 and I50.4
+    -   HFpEF = I50.3
+
+-   **Primary Outcomes**:
+
+    -   In-hospital all-cause mortality
+
+    -   Total hospital length of stay (days)
+
+    -   Total charge, inflation adjusted to 2020 (\$)
+
+-   **Software:** All analyses were performed using R Version 4.4.1 (R Foundation for Statistical Computing, Vienna, Austria)
+
+## Baseline Table:
+
+```{r}
+#| label: baseline_table
+#| cache: false
+
+# Create baseline table
+tbl_svybaseline <- dsgn %>%
+  tbl_svysummary(
+    by = HF_Categories,
+    include = baseline_var,
+    label = baseline_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_p()
+
+# Print baseline table
+tbl_svybaseline
+
+
+```
+
+## Outcomes Table:
+
+```{r}
+#| label: outcomes_table
+
+# Create outcomes table
+tbl_svyoutcomes <- dsgn %>%
+  tbl_svysummary(
+    by = HF_Categories,
+    include = outcome_var,
+    label = outcome_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_p()
+
+# Print outcomes table
+tbl_svyoutcomes
+
+```
+
+
+### Multivariable Logistic Regression:
+
+#### All-Cause Mortality:
+
+```{r}
+#| label: reg_all_cause_mortality
+
+# Create the regression model for all cause mortality
+reg_model_died <- svyglm(
+  DIED ~ HF_Categories + AGE + FEMALE + RACE + elixsum  + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH +
+    HTN + Hyperlip + PVD + CAD + COPD + Valv_HD + Dementia + CA + Fluid_disorders + Afib + BMI + Pacemaker + pMI + Depression + pCardiacSurg,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_died, exponentiate = T, label = reg_var_labels)
+```
+
+### Multivariable Linear Regression:
+
+#### Length of Stay:
+
+```{r}
+#| label: reg_length_of_stay
+
+# Create the regression model
+reg_model_LOS <- svyglm(
+  LOS ~ HF_Categories + AGE + FEMALE + RACE + elixsum  + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH +
+    HTN + Hyperlip + PVD + CAD + COPD + Valv_HD + Dementia + CA + Fluid_disorders + Afib + BMI + Pacemaker + pMI + Depression + pCardiacSurg,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model_LOS, exponentiate = F, label = reg_var_labels)
+
+```
+
+#### Inflation Adjusted Total Charge:
+
+```{r}
+#| label: reg_total_charge
+
+# Create the regression model for Total Charge (Inflation Adjusted)
+reg_model_TOTCHG <- svyglm(
+  adj_TOTCHG ~ HF_Categories + AGE + FEMALE + RACE + elixsum  + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HOSP_BEDSIZE + HOSP_LOCTEACH +
+    HTN + Hyperlip + PVD + CAD + COPD + Valv_HD + Dementia + CA + Fluid_disorders + Afib + BMI + Pacemaker + pMI + Depression + pCardiacSurg,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model_TOTCHG, exponentiate = F, label = reg_var_labels)
+
+```
+
