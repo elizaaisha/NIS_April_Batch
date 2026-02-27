@@ -1,5 +1,5 @@
 ---
-title: "Palliative Care in Colorectal Cancer Patients: A National Inpatient Sample Analysis"
+title: "Predictors of Palliative Care in Colorectal Cancer Patients: A National Inpatient Sample Analysis"
 subtitle: "Analysis for RCOP NIS-Apr-IM12"
 author:
   - name: Eliza Aisha
@@ -20,6 +20,8 @@ library(tidyverse)
 library(arrow)
 library(survey)
 library(gtsummary)
+library(cardx)
+library(broom.helpers)
 
 # Load external dependencies
 source("./scripts/labels.R")
@@ -36,23 +38,18 @@ TESTING <- F
 
 #Import data
 if (TESTING) {
-  dta <- arrow::open_dataset("./nis_data/NIS_Pall_CRC_testing.parquet") |> collect()
+  dta <- arrow::open_dataset("./data/NIS_Palliative_CRC_testing.parquet") |> collect()
 } else {
-  dta <- arrow::open_dataset("./nis_data/NIS_Pall_CRC.parquet/") |> collect()
+  dta <- arrow::open_dataset("./data/NIS_Palliative_CRC.parquet/") |> collect()
 }
 
 # Set factor references
 dta <- dta |>
   mutate(
-    IE_Afib = fct_relevel(IE_Afib, "Infective Endocarditis without Atrial Fibrillation"),
     Insurance = fct_relevel(Insurance, "Private"),
     RACE = fct_relevel(RACE, "White"),
-    DIED = as.factor(DIED),
-    LOS = as.numeric(LOS),
-    ARF = as.factor(ARF),
-    AIS = as.factor(AIS),
-    AHF = as.factor(AHF)
-  )
+    Palliative_Care = fct_relevel(Palliative_Care, "No")
+)
 
 # Set survey options for lonely PSUs
 options(survey.lonely.psu = "adjust")
@@ -68,7 +65,7 @@ dsgn <- svydesign(
 )
 
 # Subset data for specific condition
-dsgn <- subset(dsgn, IE == "Yes")
+dsgn <- subset(dsgn, Colorectal_CA == "Yes" & !is.na(Palliative_Care))
 
 # Clean up memory
 rm(dta)
@@ -81,40 +78,65 @@ gc()
 
 -   **Reference Papers:**
 
-    -   [Sidhu et al. 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9207776/pdf/main.pdf)
+    -   [Mojtahedi et al. 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC8496534/#s0002)
 
--   **Study Objective**: Examine the utilization of palliative care among patients with colorectal cancer.
+-   **Study Objective**:  To characterize the demographic, clinical, and hospital-level factors associated with utilization of palliative care among patients with colorectal cancer.
 
--   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020.
+-   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020. The NIS is part of the Healthcare Cost and Utilization Project (HCUP) and provides a stratified sample of inpatient discharges from U.S. community hospitals across all payers.
 
--   **Patient Selection**: Included all inpatient admissions with a diagnosis of colorectal cancer.
+-   **Cohort Definition:** Patients were included if they met the following criteria
+
+    -   Age ≥18 years
+
+    -   Diagnosis of colorectal cancer
+
+    -   Non-missing data for palliative care consultation status
     
--   **Statistical Analysis**: Multiple logistic and linear regression to determine the independent association of atrial fibrillation with in-hospital outcomes, respectively, adjusted for:
+-   **Outcome of Interest:** Receipt of palliative care consultation, defined by ICD-10-CM code Z51.5 ("Encounter for palliative care") in any diagnosis field.
 
-    -   Demographics: Age, sex, race, residential income, insurance, and hospital region,
+-   **Covariates for Adjustment:** All models adjusted for
 
-    -   Medical History: Hypertension, diabetes mellitus, hyperlipidemia, coronary artery disease, peripheral vascular disease, heart failure, chronic kidney disease, chronic obstructive pulmonary disease, liver disease, obstructive sleep apnea, anemia, obesity, alochol use disorder, and tobacco use disorder.
+    -   **Demographic Factors:** Age, sex, race/ethnicity
 
-    -   Comorbidities: Charlson comorbidity index.
+    -   **Socioeconomic Factors:** Primary payer, ZIP code–level income quartile
 
--   **Software:** All analyses were performed using R Version 4.4.1 (R Foundation for Statistical Computing, Vienna, Austria)
+    -   **Clinical Factors:** Elixhauser comorbidity index (aggregate score), APR-DRG risk of mortality
+
+    -   **Hospital-Level Factors:** Hospital region, bed size, teaching status, and urban/rural location
+    
+-   **Statistical Methods:**
+
+    -   **Descriptive Analysis:**
+
+        -   Patient and hospital characteristics were compared between those who did and did not receive palliative care consultation.
+
+        -   Categorical variables: Compared using Pearson’s chi-square test with Rao & Scott adjustment
+
+        -   Continuous variables: Analyzed using the design-based Kruskal–Wallis test, a non-parametric alternative suitable for survey-weighted data
+
+    -   **Multivariable Analysis:**
+
+        -   Predictors of palliative care consultation were assessed using survey-weighted logistic regression with the `quasibinomial` family.
+
+        -   Results were reported as adjusted odds ratios (aORs) with 95% confidence intervals.
+
+-   **Software:** All statistical analyses were performed using the R Statistical Language (Version 4.5.0; R Foundation for Statistical Computing, Vienna, Austria), incorporating survey-weighted procedures via the *survey* package to account for the complex sampling design of NIS.
 
 ## Baseline Table:
 
 ```{r}
 #| label: baseline
-#| cache: true
+#| cache: false
 
 # Create baseline table
 tbl_svybaseline <- dsgn %>%
   tbl_svysummary(
-    by = IE_Afib,
+    by = Palliative_Care,
     include = baseline_var,
     label = baseline_var_labels,
-    statistic = list(all_continuous() ~ "{mean} ({sd})"),
     missing = "no"
   ) %>%
-  add_p() %>%
+  add_p() |>
   add_overall()
 
 # Print baseline table
@@ -122,60 +144,32 @@ tbl_svybaseline
 
 ```
 
-## Outcomes Table:
+## Multivariable logistic regression:
+
+### Palliative care consultation:
 
 ```{r}
-#| label: outcomes_table
+#| label: reg_Palliative_Care
 
-# Create outcomes table
-tbl_svyoutcomes <- dsgn %>%
-  tbl_svysummary(
-    include = outcome_var,
-    label = outcome_var_labels,
-    statistic = list(all_continuous() ~ "{mean} ({sd})"),
-    missing = "no"
-  ) %>%
-  add_p() %>%
-  add_overall()
-
-# Print outcomes table
-tbl_svyoutcomes
-
-```
-
-## Multivariable Logistic Regression:
-
-### Palliative Care Utilization:
-
-```{r}
-#| label: reg_pall_care
-
-# Create the regression model for palliative care
-reg_model_pall_care <- svyglm(
-  Pall_Care ~ AGE + FEMALE + RACE + ZIPINC_QRTL + APRDRG_Severity + Insurance + charlindex + Hosp_Census_Region,
+# Palliative_Care
+#Create the regression model
+reg_model <- svyglm(
+  Palliative_Care ~
+    AGE +
+      FEMALE +
+      RACE +
+      Insurance +
+      ZIPINC_QRTL +
+      Hosp_Census_Region +
+      HOSP_BEDSIZE +
+      HOSP_LOCTEACH +
+      APRDRG_Risk_Mortality +
+      elixsum,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_pall_care, exponentiate = T, label = reg_var_labels)
+tbl_regression(reg_model, exponentiate = T, label = reg_var_labels)
 
 ```
-
-### Discharge Disposition:
-
-```{r}
-#| label: ARF
-
-# Create the regression model for ARF
-reg_model_Disp <- svyglm(
-  DISPUNIFORM ~ Pall_care + AGE + FEMALE + RACE + ZIPINC_QRTL + APRDRG_Severity + Insurance + charlindex + Hosp_Census_Region,
-  design = dsgn,
-  family = "quasibinomial"
-)
-
-# Print regression table
-tbl_regression(reg_model_Disp, exponentiate = T, label = reg_var_labels)
-
-```
-

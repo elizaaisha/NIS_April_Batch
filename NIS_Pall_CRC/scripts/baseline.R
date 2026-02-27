@@ -11,20 +11,20 @@ library(gtsummary)
 # Load external dependencies
 source("./scripts/labels.R")
 
- # Global options
- TESTING <- T
+# Global options
+TESTING <- F
 
- #Import data
- if (TESTING) {
-   dta <- arrow::open_dataset("./data/NIS_HIV_IE_testing.parquet") |> collect()
- } else {
-   dta <- arrow::open_dataset("./data/NIS_Pall_CRC.parquet") |> collect()
- }
+#Import data
+if (TESTING) {
+  dta <- arrow::open_dataset("./data/NIS_Palliative_CRC_testing.parquet") |> collect()
+} else {
+  dta <- arrow::open_dataset("./data/NIS_Palliative_CRC.parquet/") |> collect()
+}
 
  # Set factor references
 dta <- dta |>
   mutate(
-    Pall_Care = as.factor(Pall_Care),
+    Palliative_Care = as.factor(Palliative_Care),
     Insurance = fct_relevel(Insurance, "Private"),
     RACE = fct_relevel(RACE, "White"),
     DIED = as.factor(DIED),
@@ -45,8 +45,7 @@ dsgn <- svydesign(
 )
 
 # Subset data for specific condition
-dsgn <- subset(dsgn, IE == "Yes" & AGE > 18)
-
+dsgn <- subset(dsgn, Colorectal_CA == "Yes" & !is.na(Palliative_Care))
 
 # Clean up memory
 rm(dta)
@@ -56,29 +55,13 @@ gc()
 # Create baseline table
 tbl_svybaseline <- dsgn %>%
   tbl_svysummary(
-    by = IE_HIV,
+    by = Palliative_Care,
     include = baseline_var,
     label = baseline_var_labels,
-    statistic = list(all_continuous() ~ "{mean} ({sd})"),
     missing = "no"
   ) %>%
-  add_p() %>%
+  add_p() |>
   add_overall()
 
 # Print baseline table
 tbl_svybaseline
-
-# Create outcomes table
-tbl_svyoutcomes <- dsgn %>%
-  tbl_svysummary(
-    by = IE_HIV,
-    include = outcome_var,
-    label = outcome_var_labels,
-    statistic = list(all_continuous() ~ "{mean} ({sd})"),
-    missing = "no"
-  ) %>%
-  add_p() %>%
-  add_overall()
-
-# Print outcomes table
-tbl_svyoutcomes

@@ -35,7 +35,7 @@ dta_clean <- dta_base |>
       .default = "No"
     ),
     IDA = case_when(
-      str_detect(DX10_Combined, "D50\\d*") ~ "Yes",
+      str_detect(DX10_Combined_not_DX1, "D50\\d*") ~ "Yes",
       .default = "No"
     ),
     HFrEF = case_when(str_detect(DX10_Combined, "I502\\d*|I504\\d*") ~ "Yes", .default = "No"),
@@ -159,7 +159,7 @@ dta_clean <- dta_clean |> to_arrow()
 # Write cleaned data to parquet dataset
 arrow::write_dataset(
   dta_clean,
-  "./nis_data/NIS_HF_IDA_2.parquet",
+  "./nis_data/NIS_HF_IDA_2_DX1.parquet",
   format = "parquet",
   partitioning = "YEAR"
 )

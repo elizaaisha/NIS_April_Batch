@@ -87,7 +87,7 @@ dta_clean <- dta_base |>
     Favorable_Discharge = case_when(
       DISPUNIFORM %in% c("Routine discharge to home/self-care", "Home health care") ~ "Yes",
       .default = "No"
-    ),
+    )
   ) |>
   select(
     # Base variables

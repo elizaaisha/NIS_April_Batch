@@ -45,28 +45,69 @@ dta_clean <- dta_base |>
       PAY1 == "No charge" ~ "Other",
       .default = PAY1
     ),
-    LiverDis = case_when(
-      ynel14 == "Yes" ~ "with Liver Disease",
-      .default = "without Liver Disease"
+    Cirrhosis = case_when(
+      str_detect(DX10_Combined, isCirrhosis) ~ "With liver cirrhosis",
+      .default = "Without liver cirrhosis"
     ),
     ColorectalCancer = case_when(
-      str_detect(DX10_Combined, isColorectalCancer) ~ "Yes",
+      str_detect(I10_DX1, isColorectalCancer) ~ "Yes",
       .default = "No"
     ),
-    CRC_Resection = case_when(
-      str_detect(PR10_Combined, CRC_Resection) ~ "Yes",
+    Colectomy = case_when(
+      str_detect(PR10_Combined, Colectomy) ~ "Yes",
       .default = "No"
     ),
-    AMI = case_when(
-      str_detect(DX10_Combined, isAMI) ~ "Yes",
+    Colectomy_Type = case_when(
+      str_detect(PR10_Combined, OpenColectomy) ~ "Open colectomy",
+      str_detect(PR10_Combined, LapColectomy) ~ "Laparoscopic colectomy",
+      str_detect(PR10_Combined, RoboticColectomy) ~ "Robotic colectomy",
       .default = "No"
+    ),
+    Anemia = case_when(ynel25 == "Yes" | ynel26 == "Yes" ~ "Yes",
+                       .default = "No"
+    ),
+    HIV = case_when(ynel16 == "Yes" ~ "Yes",
+                    .default = "No"
+    ),
+    Hypothyroidism = case_when(
+      str_detect(DX10_Combined, isHypothyroidism) ~ "Yes",
+      .default = "No"
+    ),
+    WeightLoss = case_when(ynel23 == "Yes" ~ "Yes",
+                    .default = "No"
+    ),
+    Lymphoma = case_when(ynel17 == "Yes" ~ "Yes",
+                           .default = "No"
+    ),
+    Hypothyroidism = case_when(ynel12 == "Yes" ~ "Yes",
+                         .default = "No"
+    ),
+    AlcoholAbuse = case_when(ynel27 == "Yes" ~ "Yes",
+                               .default = "No"
+    ),
+    DrugAbuse = case_when(ynel28 == "Yes" ~ "Yes",
+                                 .default = "No"
+    ),
+    Depression = case_when(ynel30 == "Yes" ~ "Yes",
+                          .default = "No"
+    ),
+    FluidDisorder = case_when(ynel24 == "Yes" ~ "Yes",
+                          .default = "No"
+    ),
+    Coagulopathy = case_when(ynel21 == "Yes" ~ "Yes",
+                              .default = "No"
+    ),
+    Psychoses = case_when(ynel29 == "Yes" ~ "Yes",
+                              .default = "No"
+    ),
+    RheumatoidDisease = case_when(ynch7 == "Yes" ~ "Yes",
+                          .default = "No"
+    ),
+    ValvularDisease = case_when(ynel3 == "Yes" ~ "Yes",
+                                  .default = "No"
     ),
     CKD = case_when(
       str_detect(DX10_Combined, isCKD) ~ "Yes",
-      .default = "No"
-    ),
-    IBD = case_when(
-      str_detect(DX10_Combined, isIBD) ~ "Yes",
       .default = "No"
     ),
     HTN = case_when(
@@ -85,10 +126,19 @@ dta_clean <- dta_base |>
       ynel9 == "Yes" ~ "Yes",
       .default = "No"
     ),
+    Paralysis = case_when(
+      ynel7 == "Yes" ~ "Yes",
+      .default = "No"
+    ),
+    NeurologicalDisorders = case_when(
+      ynel8 == "Yes" ~ "Yes",
+      .default = "No"
+    ),
     PVD = case_when(
       ynel5 == "Yes" ~ "Yes",
       .default = "No"
     ),
+    Dementia = case_when(ynch5 == "Yes" ~ "Yes", .default = "No"),
     Hyperlipidemia = case_when(
       str_detect(DX10_Combined, isHyperlipidemia) ~ "Yes",
       .default = "No"
@@ -105,16 +155,12 @@ dta_clean <- dta_base |>
       ynel1 == "Yes" ~ "Yes",
       .default = "No"
     ),
-    Smoking = case_when(
+    Smoker = case_when(
       str_detect(DX10_Combined, isSmoking) ~ "Yes",
       .default = "No"
     ),
     PriorStroke = case_when(
       str_detect(DX10_Combined, isPriorStroke) ~ "Yes",
-      .default = "No"
-    ),
-    Cancer = case_when(
-      ynch14 == "Yes" ~ "Yes",
       .default = "No"
     ),
     Sepsis = case_when(
@@ -133,34 +179,35 @@ dta_clean <- dta_base |>
       str_detect(DX10_Combined, isPneumonia) ~ "Yes",
       .default = "No"
     ),
-    Hemorrhage = case_when(
-      str_detect(DX10_Combined, isHemorrhage) ~ "Yes",
+    GIHemorrhage = case_when(
+      str_detect(DX10_Combined, isGIHemorrhage) ~ "Yes",
       .default = "No"
     ),
-    DVT = case_when(
-      str_detect(DX10_Combined, isDVT) ~ "Yes",
+    VTE = case_when(
+      str_detect(DX10_Combined, isVTE) ~ "Yes",
       .default = "No"
     ),
-    PulmEmbolism = case_when(
-      str_detect(DX10_Combined, isPulmEmbolism) ~ "Yes",
+    AMI = case_when(
+      str_detect(DX10_Combined, isAMI) ~ "Yes",
       .default = "No"
     ),
-    RespFailure = case_when(
-      str_detect(DX10_Combined, isRespFailure) ~ "Yes",
+    AcuteRespiratoryFailure = case_when(
+      str_detect(DX10_Combined, isAcuteRespiratoryFailure) ~ "Yes",
       .default = "No"
     ),
     MechanicalVentilation = case_when(
       str_detect(DX10_Combined, isMechanicalVentilation) ~ "Yes",
       .default = "No"
     ),
-    CardiacArrest = case_when(
-      str_detect(DX10_Combined, isCardiacArrest) ~ "Yes",
-      .default = "No"
-    ),
     Stroke = case_when(
       str_detect(DX10_Combined, isStroke) ~ "Yes",
       .default = "No"
+    ),
+    AcuteKidneyInjury  = case_when(
+      str_detect(DX10_Combined, isAcuteKidneyInjury) ~ "Yes",
+      .default = "No"
     )
+
   ) |>
   select(
     # Base variables
@@ -187,34 +234,52 @@ dta_clean <- dta_base |>
     Insurance,
     PL_NCHS,
     # Study-specific variables
-    AMI,
+    Cirrhosis,
     ColorectalCancer,
+    Colectomy,
+    Colectomy_Type,
+    Anemia,
+    HIV,
+    Hypothyroidism,
+    WeightLoss,
+    Lymphoma,
+    Hypothyroidism,
+    AlcoholAbuse,
+    DrugAbuse,
+    Depression,
+    FluidDisorder,
+    Psychoses,
+    RheumatoidDisease,
+    ValvularDisease,
     CKD,
+    Paralysis,
     HTN,
     Obesity,
     DM,
     CPD,
-    LiverDis,
-    CRC_Resection,
     PVD,
+    Dementia,
     Hyperlipidemia,
+    Coagulopathy,
     CHF,
-    Arrhythmia,
-    Smoking,
-    PriorStroke,
-    CardiacArrest,
-    Stroke,
-    IBD,
+    NeurologicalDisorders,
     ObstructiveSleepApnea,
-    Cancer,
+    Smoker,
+    PriorStroke,
+    Sepsis,
     WoundInfection,
     Abcess,
     Pneumonia,
-    Hemorrhage,
-    DVT,
-    PulmEmbolism,
-    RespFailure,
-    MechanicalVentilation
+    GIHemorrhage,
+    VTE,
+    AMI,
+    AcuteRespiratoryFailure,
+    MechanicalVentilation,
+    Stroke,
+    AcuteKidneyInjury,
+    ELECTIVE,
+    grpci,
+    elixsum
   )
 
 # Convert cleaned data to arrow dataset

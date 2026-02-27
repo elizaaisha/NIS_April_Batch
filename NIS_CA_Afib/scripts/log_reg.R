@@ -3,7 +3,8 @@ library(tidyverse)
 library(arrow)
 library(survey)
 library(gtsummary)
-
+library(car)
+library(easystats)
 
 # Install 'fastsurvey' from GitHub if not already installed
 # remotes::install_github("bschneidr/fastsurvey")
@@ -12,7 +13,7 @@ library(gtsummary)
 source("./scripts/labels.R")
 
 # Global options
-TESTING <- F
+TESTING <- T
 
 #Import data
 if (TESTING) {
@@ -31,8 +32,7 @@ dta <- dta |>
     AMI = as.factor(AMI),
     AIS = as.factor(AIS),
     VTE = as.factor(VTE),
-    MB = as.factor(ME),
-    PE = as.factor(PE),
+    MB = as.factor(MB),
     LOS = as.numeric(LOS)
   )
 
@@ -50,62 +50,95 @@ dsgn <- svydesign(
 )
 
 # Subset data for specific condition
-dsgn <- subset(dsgn, A_Fib == "Yes" & AGE > 18 & !is.na(CA_Afib))
-
+dsgn <- subset(dsgn, A_Fib == "Yes" & CatheterAblation == "No" & AGE > 18 & !is.na(CA_Afib))
 
 # Clean up memory
 rm(dta)
 gc()
 
-# # Create the regression model for all cause mortality
-# reg_model_died <- svyglm(
-#   DIED ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM,
-#   design = dsgn,
-#   family = "quasibinomial"
-# )
-#
-# # Print regression table
-# tbl_regression(reg_model_died, exponentiate = T)
+# Create the regression model for all cause mortality
+reg_model_died <- svyglm(
+  DIED ~ CA_Afib + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + VHD + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Smoker,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_died, exponentiate = T)
+
+vif(reg_model_died)
 
 # Create the regression model for AMI
 reg_model_AMI <- svyglm(
-  AMI ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Hyperlip + CAD + PVD + CHF +
+  AMI ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS + HTN + DM + Hyperlip + CAD + PVD + CHF +
     CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Tobb,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-reg_model_AMI <- tbl_regression(reg_model_AMI, exponentiate = T, label = reg_var_labels)
+reg_model_AMI <- tbl_regression(reg_model_AMI, exponentiate = T)
 reg_model_AMI
 
 # Create the regression model for AIS
 reg_model_AIS <- svyglm(
-  AIS ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Hyperlip + CAD + PVD + CHF +
-    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Tobb,
+  AIS ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + VHD + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Smoker,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-reg_model_AIS <- tbl_regression(reg_model_AIS, exponentiate = T, label = reg_var_labels)
-reg_model_AIS
+model_AIS <- tbl_regression(reg_model_AIS, exponentiate = T)
+model_AIS
+
+vif(reg_model_AIS)
+
+model_performance(reg_model_AIS)
+
+r2(reg_model_AIS)
 
 # Create the regression model for VTE
 reg_model_VTE <- svyglm(
   VTE ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Hyperlip + CAD + PVD + CHF +
-    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Tobb,
+    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Tobb,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-reg_model_VTE <- tbl_regression(reg_model_AHF, exponentiate = T, label = reg_var_labels)
+reg_model_VTE <- tbl_regression(reg_model_VTE, exponentiate = T)
 reg_model_VTE
+
+# Create the regression model for MB
+reg_model_MB <- svyglm(
+  MB ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Tobb,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+reg_model_MB <- tbl_regression(reg_model_MB, exponentiate = T)
+reg_model_MB
+
+# Create the regression model for PE
+reg_model_PE <- svyglm(
+  PE ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Tobb,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+reg_model_PE <- tbl_regression(reg_model_PE, exponentiate = T)
+reg_model_PE
 
 # Create the regression model
 reg_model_LOS <- svyglm(
-  LOS ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM,
+  LOS ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Hyperlip + CAD + PVD + CHF +
+    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Tobb,
   design = dsgn,
   family = "gaussian"
 )
@@ -116,7 +149,7 @@ tbl_regression(reg_model_LOS, exponentiate = F)
 # Create the regression model for Total Charge (Inflation Adjusted)
 reg_model_TOTCHG <- svyglm(
   adj_TOTCHG ~ CA_Afib + AGE + FEMALE + RACE + charlindex + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Hyperlip + CAD + PVD + CHF +
-    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Pacemaker_defib + Tobb,
+    CKD + COPD + Dementia + Liver_Dis + OSA + Anemia + Alcohol + Obesity + pStroke + pCardiacSurg + Tobb,
   design = dsgn,
   family = "gaussian"
 )

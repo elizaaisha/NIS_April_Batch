@@ -58,20 +58,20 @@ rm(dta)
 gc()
 
 
-# # Create baseline table
-# tbl_svybaseline <- dsgn %>%
-#   tbl_svysummary(
-#     by = CA_Afib,
-#     include = baseline_var,
-#     label = baseline_var_labels,
-#     statistic = list(all_continuous() ~ "{mean} ({sd})"),
-#     missing = "no"
-#   ) %>%
-#   add_p() %>%
-#   add_overall()
-#
-# # Print baseline table
-# tbl_svybaseline
+# Create baseline table
+tbl_svybaseline <- dsgn %>%
+  tbl_svysummary(
+    by = CA_Afib,
+    include = baseline_var,
+    label = baseline_var_labels,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_p() %>%
+  add_overall()
+
+# Print baseline table
+tbl_svybaseline
 
 # Create outcomes table
 tbl_svyoutcomes <- dsgn %>%

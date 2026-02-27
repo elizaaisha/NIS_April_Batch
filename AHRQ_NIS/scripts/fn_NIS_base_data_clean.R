@@ -9,6 +9,7 @@ library(dbplyr) # For DuckDB dplyr
 fn_NIS_base_data_clean <- function(datasets) {
   # Define the vector columns
   icd_dx_columns <- paste0("I10_DX", 1:40)
+  icd_dx_columns_2_40 <- paste0("I10_DX", 2:40)
   icd_pr_columns <- paste0("I10_PR", 1:25)
   icd_pr_day_columns <- paste0("PRDAY", 2:25)
   elix_dx_columns <- paste0("ynel", 1:31)
@@ -21,6 +22,7 @@ fn_NIS_base_data_clean <- function(datasets) {
       # Combine ICD DX & PR columns into one
       DX10_Combined = str_c(!!!syms(icd_dx_columns), sep = ", "),
       PR10_Combined = str_c(!!!syms(icd_pr_columns), sep = ", "),
+      DX10_Combined_not_DX1 = str_c(!!!syms(icd_dx_columns_2_40), sep = ", "),
       # Admission information
       AWEEKEND = case_when(
         AWEEKEND == 0 ~ "Monday-Friday",
@@ -44,6 +46,20 @@ fn_NIS_base_data_clean <- function(datasets) {
         TRAN_IN == 0 ~ "No transfer",
         TRAN_IN == 1 ~ "Transferred from acute-care",
         TRAN_IN == 2 ~ "Transferred from other"
+      ),
+      TRAN_OUT = case_when(
+        TRAN_OUT == 0 ~ "No transfer",
+        TRAN_OUT == 1 ~ "Transferred to acute-care",
+        TRAN_OUT == 2 ~ "Transferred to other"
+      ),
+      DISPUNIFORM = case_when(
+        DISPUNIFORM == 1 ~ "Routine discharge to home/self-care",
+        DISPUNIFORM == 2 ~ "Transfer to short-term hospital",
+        DISPUNIFORM == 5 ~ "Transfer to skilled nursing facility, intermediate care, or another facility",
+        DISPUNIFORM == 6 ~ "Home health care",
+        DISPUNIFORM == 7 ~ "Left against medical advice",
+        DISPUNIFORM == 20 ~ "Died in hospital",
+        DISPUNIFORM == 99 ~ "Alive, destination unknown"
       ),
       HCUP_ED = case_when(HCUP_ED == 0 ~ "No", HCUP_ED %in% c(1, 2, 3, 4, 5) ~ "Yes"),
       ELECTIVE = case_when(ELECTIVE == 0 ~ "Non-elective", ELECTIVE == 1 ~ "Elective"),

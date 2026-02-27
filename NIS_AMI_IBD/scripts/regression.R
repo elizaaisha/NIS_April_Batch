@@ -3,6 +3,8 @@ library(tidyverse)
 library(arrow)
 library(survey)
 library(gtsummary)
+library(car)
+library(easystats)
 
 # Load external dependencies
 source("./scripts/labels.R")
@@ -30,8 +32,11 @@ dta <- dta |>
     CardiacArrest = as.factor(CardiacArrest),
     Stroke = as.factor(Stroke),
     PCIProcedure = as.factor(PCIProcedure),
-    CABGProcedure = as.factor(CABGProcedure),
-    MACE = as.factor(MACE)
+    MCS = as.factor(MCS),
+    MVent = as.factor(MVent),
+    AKI = as.factor(AKI),
+    GIHemorrhage = as.factor(GIHemorrhage),
+    CABGProcedure = as.factor(CABGProcedure)
   )
 
 # Set survey options for lonely PSUs
@@ -54,26 +59,27 @@ dsgn <- subset(dsgn, AMI == "Yes" & AGE >= 18)
 rm(dta)
 gc()
 
-# At least 1 Complication
 
 #Create the regression model
 reg_model_DIED <- svyglm(
-  DIED ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + charlindex + htn + CKD +
-  obesity + dm + CPD + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + Arrhythmia + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  DIED ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + UlcerativeColitis + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+  obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_DIED, exponentiate = T, label = reg_var_labels)
+tbl_regression(reg_model_DIED, exponentiate = T)
+
+vif(reg_model_DIED)
 
 model_performance(reg_model_DIED)
 
 
 #Create the regression model
 reg_model_CardioShock <- svyglm(
-  CardioShock ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + charlindex + htn + CKD +
-    obesity + dm + CPD + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + Arrhythmia + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  CardioShock ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
   design = dsgn,
   family = "quasibinomial"
 )
@@ -83,10 +89,12 @@ tbl_regression(reg_model_CardioShock, exponentiate = T, label = reg_var_labels)
 
 model_performance(reg_model_DIED)
 
+vif()
+
 #Create the regression model
 reg_model_CardiacArrest <- svyglm(
-  CardiacArrest ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + charlindex + htn + CKD +
-    obesity + dm + CPD + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + Arrhythmia + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  CardiacArrest ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
   design = dsgn,
   family = "quasibinomial"
 )
@@ -96,8 +104,8 @@ tbl_regression(reg_model_CardiacArrest, exponentiate = T, label = reg_var_labels
 
 #Create the regression model
 reg_model_Stroke <- svyglm(
-  Stroke ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + charlindex + htn + CKD +
-    obesity + dm + CPD + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + Arrhythmia + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  Stroke ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + UlcerativeColitis + CrohnsDisease + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
   design = dsgn,
   family = "quasibinomial"
 )
@@ -109,8 +117,8 @@ model_performance(reg_model_Stroke)
 
 #Create the regression model
 reg_model_PCIProcedure <- svyglm(
-  PCIProcedure ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + charlindex + htn + CKD +
-    obesity + dm + CPD + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + Arrhythmia + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  PCIProcedure ~ IBD + AGE + FEMALE + UlcerativeColitis + CrohnsDisease + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
   design = dsgn,
   family = "quasibinomial"
 )
@@ -122,8 +130,8 @@ model_performance(reg_model_PCIProcedure)
 
 #Create the regression model
 reg_model_CABGProcedure <- svyglm(
-  CABGProcedure ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + charlindex + htn + CKD +
-    obesity + dm + CPD + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + Arrhythmia + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  CABGProcedure ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + UlcerativeColitis + CrohnsDisease + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
   design = dsgn,
   family = "quasibinomial"
 )
@@ -133,15 +141,49 @@ tbl_regression(reg_model_CABGProcedure, exponentiate = T, label = reg_var_labels
 
 model_performance(reg_model_CABGProcedure)
 
+model_performance(reg_model_MACE)
+
+# Create the regression model for Total Charge (Inflation Adjusted)
+reg_model_TOTCHG <- svyglm(
+  adj_TOTCHG ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  design = dsgn,
+  family = "gaussian"
+)
+
+# Print regression table
+tbl_regression(reg_model_TOTCHG, exponentiate = F, label = reg_var_labels)
+
 #Create the regression model
-reg_model_MACE <- svyglm(
-  MACE ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + charlindex + htn + CKD +
-    obesity + dm + CPD + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + Arrhythmia + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+reg_model_PCI <- svyglm(
+  PCIProcedure ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_MACE, exponentiate = T, label = reg_var_labels)
+tbl_regression(reg_model_PCI, exponentiate = T, label = reg_var_labels)
 
-model_performance(reg_model_MACE)
+#| label: reg_CABG
+
+#Create the regression model
+reg_model_CABG <- svyglm(
+  CABGProcedure ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_CABG, exponentiate = T, label = reg_var_labels)
+
+reg_model_CABG <- svyglm(
+  MCS ~ IBD + AGE + FEMALE + RACE + ZIPINC_QRTL + Insurance + PL_NCHS + HOSP_REGION + HOSP_BEDSIZE + HOSP_LOCTEACH + elixsum + htn + CKD +
+    obesity + dm + CPD + Dementia + LiverDis + PVD + Hyperlipidemia + CHF + Cancer + ObstructiveSleepApnea + ValvHD + Smoking + PriorStroke + PreviousPCI + PreviousCABG,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_CABG, exponentiate = T, label = reg_var_labels)

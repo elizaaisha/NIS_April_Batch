@@ -32,7 +32,7 @@ source("./scripts/labels.R")
 #| cache: false
 
 # Global options
-TESTING <- T
+TESTING <- F
 
  #Import data
  if (TESTING) {
@@ -51,7 +51,7 @@ dta <- dta |>
     MVent = as.factor(MVent),
     Sepsis = as.factor(Sepsis),
     LOS = as.numeric(LOS),
-    Favorable_Discharge = as.factor(Favorable_Discharge),
+    Disp_home = as.factor(Disp_home),
     Disp_short = as.factor(Disp_short),
     Disp_long = as.factor(Disp_long),
     Pall_Care = as.factor(Pall_Care),
@@ -72,7 +72,7 @@ dsgn <- svydesign(
 )
 
 # Subset data for specific condition
-dsgn <- subset(dsgn, PD == "Yes")
+dsgn <- subset(dsgn, PD == "Yes" & !is.na(PD_AP))
 
 # Clean up memory
 rm(dta)
@@ -87,17 +87,17 @@ gc()
 
     -   [Luca et al. 2021](https://journals.sagepub.com/doi/full/10.3233/JPD-212798)
 
--   **Study Objective**: Examine the impact of aspiration pneumonia on in-hospital outcomes among inpatient admissions with a Parkinson's disease.
+-   **Study Objective**: Examine the impact of aspiration pneumonia on in-hospital outcomes among inpatient admissions with Parkinson's disease.
 
 -   **Data Source**: Cross-sectional analysis of the National Inpatient Sample (NIS) from 2018 to 2020.
 
--   **Patient Selection**: Included all inpatient admissions with a Parkinson's disease.
+-   **Patient Selection**: Included all inpatient admissions with a diagnosis of Parkinson's disease.
 
--   **Aspirtaion Pneumonia + Parkinson's Disease Categories**:
+-   **Aspiration Pneumonia + Parkinson's Disease Categories**:
 
-    -   Parkinson's Disease with Aspirtaion Pneumonia
+    -   Parkinson's Disease with Aspiration Pneumonia
 
-    -   Parkinson's Disease without Aspirtaion Pneumonia
+    -   Parkinson's Disease without Aspiration Pneumonia
 
 -   **Outcomes**:
 
@@ -119,9 +119,9 @@ gc()
 
 -   **Covariates for Adjustment:** All models adjusted for the following
 
-    -   Demographics: Age, sex, race, residential income, insurance, hospital region, hospital bedsize, hospital location, and teaching status.
+    -   Demographics: Age, sex, race, residential income, insurance, hospital region, hospital bedsize, residence (urbanicity), hospital location, and teaching status.
 
-    -   Medical History: Hypertension, diabetes mellitus, hyperlipidemia, coronary artery disease, peripheral vascular disease, heart failure, chronic kidney disease, chronic obstructive pulmonary disease, dementia, liver disease, fluid/electrolyte imbalance, obesity, prior stroke, prior cardiac surgery, presence of pacemaker/defibrillator.
+    -   Medical History: Hypertension, diabetes mellitus, cancer, hyperlipidemia, coronary artery disease, peripheral vascular disease, heart failure, chronic kidney disease, chronic obstructive pulmonary disease, dementia, liver disease, fluid/electrolyte imbalance.
 
     -   Comorbidities: Elixhauser comorbidity index.
 
@@ -197,7 +197,7 @@ tbl_svyoutcomes
 
 # Create the regression model for all cause mortality
 reg_model_died <- svyglm(
-  DIED ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  DIED ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
@@ -214,14 +214,14 @@ tbl_regression(reg_model_died, exponentiate = T, label = reg_var_labels)
 #| label: ARF
 
 reg_model_ARF <- svyglm(
-  ARF ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  ARF ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-reg_model_ARF <- tbl_regression(reg_model_ARF, exponentiate = T)
+tbl_regression(reg_model_ARF, exponentiate = T, label = reg_var_labels)
 
 ```
 
@@ -231,14 +231,14 @@ reg_model_ARF <- tbl_regression(reg_model_ARF, exponentiate = T)
 #| label: sepsis
 
 reg_model_sepsis <- svyglm(
-  Sepsis ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  Sepsis ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_sepsis, exponentiate = T)
+tbl_regression(reg_model_sepsis, exponentiate = T, label = reg_var_labels)
 
 ```
 
@@ -248,14 +248,14 @@ tbl_regression(reg_model_sepsis, exponentiate = T)
 #| label: MVent
 
 reg_model_MVent <- svyglm(
-  MVent ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  MVent ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_MVent, exponentiate = T)
+tbl_regression(reg_model_MVent, exponentiate = T, label = reg_var_labels)
 
 ```
 
@@ -266,49 +266,49 @@ tbl_regression(reg_model_MVent, exponentiate = T)
 
 # Create the regression model for Disp_home
 reg_model_Disp_home <- svyglm(
-  Favorable_Discharge ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  Disp_home ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_Disp_home, exponentiate = T)
+tbl_regression(reg_model_Disp_home, exponentiate = T, label = reg_var_labels)
 
 ```
 
-### Discharged to short-term facility:
+### Transferred to short-term facility:
 
 ```{r}
 #| label: Dis_short
 
 reg_model_Disp_short <- svyglm(
-  Disp_short ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  Disp_short ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_Disp_short, exponentiate = T)
+tbl_regression(reg_model_Disp_short, exponentiate = T, label = reg_var_labels)
 
 ```
 
-### Discharged to long-term facility:
+### Transferred to skilled nursing facility, intermediate care, or another facility:
 
 ```{r}
 #| label: Disp_long
 
 # Create the regression model for Disp_long
 reg_model_Disp_long <- svyglm(
-  Disp_long ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  Disp_long ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_Disp_long, exponentiate = T)
+tbl_regression(reg_model_Disp_long, exponentiate = T, label = reg_var_labels)
 
 ```
 
@@ -319,14 +319,14 @@ tbl_regression(reg_model_Disp_long, exponentiate = T)
 
 # Create the regression model for palliative care consultation
 reg_model_Pall_Care <- svyglm(
-  Pall_Care ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  Pall_Care ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "quasibinomial"
 )
 
 # Print regression table
-tbl_regression(reg_model_Pall_Care, exponentiate = T)
+tbl_regression(reg_model_Pall_Care, exponentiate = T, label = reg_var_labels)
 
 ```
 
@@ -339,7 +339,7 @@ tbl_regression(reg_model_Pall_Care, exponentiate = T)
 
 # Create the regression model
 reg_model_LOS <- svyglm(
-  LOS ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+  LOS ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS +
     HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "gaussian"
@@ -357,7 +357,7 @@ tbl_regression(reg_model_LOS, exponentiate = F, label = reg_var_labels)
 
 # Create the regression model
 reg_model_TOTCHG <- svyglm(
-  adj_TOTCHG ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
+  adj_TOTCHG ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region + PL_NCHS + HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
   design = dsgn,
   family = "gaussian"
   )

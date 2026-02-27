@@ -30,14 +30,18 @@ dta_base <- fn_NIS_base_data_clean(datasets)
 
 dta_clean <- dta_base |>
   mutate(
+    # Stroke = case_when(
+    #   str_detect(I10_DX1, "^I63\\d*|^I436\\d*|^I978\\d*|^R297\\d*") ~ "Yes",
+    #   .default = "No"
+    # ),
     Stroke = case_when(
-      str_detect(I10_DX1, "^I63\\d*|^I436\\d*|^I978\\d*|^R297\\d*") ~ "Yes",
+      str_detect(I10_DX1, "^I63\\d*") ~ "Yes",
       .default = "No"
     ),
     A_Fib = case_when(afib == 1 ~ "Yes", .default = "No"),
     Insurance = case_when(
-      PAY1 == "Self-pay" ~ "Private",
-      PAY1 == "No charge" ~ "Private",
+      PAY1 == "Self-pay" ~ "Other",
+      PAY1 == "No charge" ~ "Other",
       .default = PAY1
     ),
     Hosp_Census_Region = case_when(
@@ -78,8 +82,7 @@ dta_clean <- dta_base |>
     ICH = case_when(str_detect(DX10_Combined, "I60\\d*|I61\\d*|I62\\d*") ~ "Yes", .default = "No"),
     Fluid_disorders = case_when(ynel24 == "Yes" ~ "Yes", .default = "No"),
     cancer_history = case_when(str_detect(DX10_Combined, "Z8500|Z8501|Z85020|Z85028|Z85030|Z85038|Z85040|Z85048|Z8505|Z85060|Z85068|Z8507|Z8509|Z85110|Z85118|Z8512|Z8520|Z8521|Z8522|Z85230|Z85238|Z8529|Z853|Z8540|Z8541|Z8542|Z8543|Z8544|Z8545|Z8546|Z8547|Z8548|Z8549|Z8550|Z8551|Z85520|Z85528|Z8553|Z8554|Z8559|Z856|Z8571|Z8572|Z8579|Z85810|Z85818|Z85819|Z85820|Z85821|Z85828|Z85830|Z85831|Z85840|Z85841|Z85848|Z85850|Z85858|Z8589|Z859|Z86000|Z86001|Z86002|Z86003|Z86004|Z86005|Z86006") ~ "Yes", .default = "No"),
-    Sepsis = case_when(str_detect(DX10_Combined, "A021|A207|A227|A267|A327|A392|A393|A394|A40\\d*|A41\\d*|A427|A5486|B007|B377|I76|O0337|O0387|O0487|O0737|O0887|O85|O8604|P36\\d*|R6520|R6521|T8112XA|T8144XA") ~ "Yes", .default = "No"),
-    MT = case_when(str_detect(PR10_Combined, "03CG3ZZ") ~ "Yes", .default = "No"),
+    Sepsis = case_when(str_detect(DX10_Combined, "A021|A207|A227|A267|A327|A392|A393|A394|A40\\d*|A41\\d*|A427|A5486|B377|I76\\d*|R6520|R6521|T8112XA|T8144XA") ~ "Yes", .default = "No"),
     Cancer = case_when(ynch14 == "Yes" ~ "Yes", .default = "No"),
     Endovascular_Thrombectomy = case_when(str_detect(PR10_Combined, "03C[A-Z]3ZZ") ~ "Yes", .default = "No")
   ) |>
@@ -128,7 +131,6 @@ dta_clean <- dta_base |>
     Sepsis,
     cancer_history,
     Fluid_disorders,
-    MT,
     Endovascular_Thrombectomy
   )
 

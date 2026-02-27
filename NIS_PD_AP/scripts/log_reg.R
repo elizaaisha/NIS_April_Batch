@@ -30,7 +30,7 @@ dta <- dta |>
     MVent = as.factor(MVent),
     Sepsis = as.factor(Sepsis),
     LOS = as.numeric(LOS),
-    Favorable_Discharge = as.factor(Favorable_Discharge),
+    Disp_home = as.factor(Disp_home),
     Disp_short = as.factor(Disp_short),
     Disp_long = as.factor(Disp_long),
     Pall_Care = as.factor(Pall_Care),
@@ -162,3 +162,14 @@ reg_model_ARF <- svyglm(
 # Print regression table
 reg_model_ARF <- tbl_regression(reg_model_ARF, exponentiate = T)
 reg_model_ARF
+
+# Create the regression model for ARF
+reg_model_MVent <- svyglm(
+  MVent ~ PD_AP + AGE + FEMALE + RACE + elixsum + ZIPINC_QRTL + Insurance + Hosp_Census_Region +
+    HTN + DM + Cancer + CHF + Hyperlip + CAD + PVD + CKD + COPD + Cardiac_arrhythmia + Dementia + Liver_Dis + Fluid_disorders,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_MVent, exponentiate = T)

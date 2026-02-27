@@ -9,6 +9,7 @@ baseline_var <-
     "Hosp_Census_Region",
     "HOSP_BEDSIZE",
     "HOSP_LOCTEACH",
+    "PL_NCHS",
     "HTN",
     "DM",
     "Cancer",
@@ -34,6 +35,7 @@ baseline_var_labels <- list(
   Hosp_Census_Region ~ "Hospital region",
   HOSP_BEDSIZE ~ "Hospital bedsize",
   HOSP_LOCTEACH ~ "Hospital location and teaching status",
+  PL_NCHS ~ "Residence",
   HTN ~ "Hypertension",
   DM ~ "Diabetes mellitus",
   Hyperlip ~ "Hyperlipidemia",
@@ -49,7 +51,7 @@ baseline_var_labels <- list(
   Fluid_disorders ~ "Fluid and electrolyte disorders"
 )
 
-outcome_var <- c("DIED", "LOS", "adj_TOTCHG", "Sepsis", "ARF", "MVent", "Favorable_Discharge", "Disp_long", "Disp_short", "Pall_Care")
+outcome_var <- c("DIED", "LOS", "adj_TOTCHG", "Sepsis", "ARF", "MVent", "Disp_home", "Disp_short", "Disp_long", "Pall_Care")
 
 outcome_var_labels <- list(
   DIED ~ "Died during hospitalization",
@@ -58,9 +60,9 @@ outcome_var_labels <- list(
   Sepsis ~ "Sepsis",
   ARF ~ "Acute respiratory failure",
   MVent ~ "Mechanical Ventilation",
-  Favorable_Discharge ~ "Discharged to home",
-  Disp_long ~ "Transferred to short-term facility",
-  Disp_short ~ "Discharged to long-term facility",
+  Disp_home ~ "Discharged to home",
+  Disp_short ~ "Transferred to another short-term hospital",
+  Disp_long ~ "Transferred to skilled nursing facility, intermediate care, or another facility",
   Pall_Care ~ "Palliative care utilization"
 )
 

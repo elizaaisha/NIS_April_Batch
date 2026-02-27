@@ -3,10 +3,11 @@ baseline_var <-
     "AGE",
     "FEMALE",
     "RACE",
-    "charlindex",
+    "elixsum",
     "ZIPINC_QRTL",
     "Insurance",
     "Hosp_Census_Region",
+    "PL_NCHS",
     "HTN",
     "DM",
     "Hyperlip",
@@ -15,25 +16,25 @@ baseline_var <-
     "CHF",
     "CKD",
     "COPD",
+    "VHD",
     "Liver_Dis",
     "OSA",
     "Anemia",
     "Alcohol",
     "Obesity",
-    "pStroke",
     "pCardiacSurg",
-    "Pacemaker_defib",
-    "Tobb"
+    "Smoker"
     )
 
 baseline_var_labels <- list(
   AGE ~ "Age, y",
   FEMALE ~ "Sex",
   RACE ~ "Race",
-  charlindex ~ "Charlson comorbidity index",
+  elixsum ~ "Elixhauser comorbidity index",
   ZIPINC_QRTL ~ "Residential income",
   Insurance ~ "Expected primary payer",
   Hosp_Census_Region ~ "Hospital region",
+  PL_NCHS ~ "Location of patient’s residence",
   HTN ~ "Hypertension",
   DM ~ "Diabetes mellitus",
   Hyperlip~ "Hyperlipidemia",
@@ -42,39 +43,37 @@ baseline_var_labels <- list(
   CHF ~ "Heart failure",
   CKD ~ "Chronic kidney disease",
   COPD ~ "Chronic obstructive pulmonary disease",
+  VHD ~ "Valvular heart disease",
   Liver_Dis ~ "Liver disease",
   OSA ~ "Obstructive sleep apnea",
   Anemia ~ "Anemia",
   Alcohol ~ "Alcohol use disorder",
   Obesity ~ "Obesity",
-  # pStroke ~ "Prior stroke",
-  # pCardiacSurg ~ "Prior cardiac surgery",
-  # Pacemaker_defib ~ "Pacemaker/ICD",
-  Tobb ~ "Tobbacco use disorder"
+  pCardiacSurg ~ "Prior cardiac surgery",
+  Smoker ~ "Smoker"
 )
 
-outcome_var <- c("DIED", "AMI", "AIS", "VTE", "PE", "MB", "LOS", "adj_TOTCHG")
+outcome_var <- c("DIED", "AIS", "VTE", "MB", "LOS", "adj_TOTCHG")
 
 outcome_var_labels <- list(
   DIED ~ "Died during hospitalization",
-  AMI ~ "Acute myocardial infarction",
   AIS ~ "Acute ischemic stroke",
-  VTE ~ "Venours thromboembolism",
-  PE ~ "Pulmonary embolism",
+  VTE ~ "Venous thromboembolism",
   MB ~ "Major bleeding",
   LOS ~ "Length of stay (days)",
   adj_TOTCHG ~ "Inflation-adjusted total charge ($)"
 )
 
 reg_var_labels <- list(
-  IE_Afib ~ "Atrial fibrillation categories",
+  CA_Afib ~ "Categories",
   AGE ~ "Age, y",
   FEMALE ~ "Sex",
   RACE ~ "Race",
-  charlindex ~ "Charlson comorbidity index",
+  elixsum ~ "Elixhauser comorbidity index",
   ZIPINC_QRTL ~ "Residential income",
   Insurance ~ "Expected primary payer",
   Hosp_Census_Region ~ "Hospital region",
+  PL_NCHS ~ "Location of patient’s residence",
   HTN ~ "Hypertension",
   DM ~ "Diabetes mellitus",
   Hyperlip~ "Hyperlipidemia",
@@ -83,42 +82,12 @@ reg_var_labels <- list(
   CHF ~ "Heart failure",
   CKD ~ "Chronic kidney disease",
   COPD ~ "Chronic obstructive pulmonary disease",
+  VHD ~ "Valvular heart disease",
   Liver_Dis ~ "Liver disease",
   OSA ~ "Obstructive sleep apnea",
   Anemia ~ "Anemia",
   Alcohol ~ "Alcohol use disorder",
   Obesity ~ "Obesity",
-  Tobb ~ "Tobbacco use disorder"
+  pCardiacSurg ~ "Prior cardiac surgery",
+  Smoker ~ "Smoker"
 )
-
-
-#reg_var_labels <- list(
-# IE_Afib ~ "Atrial fibrillation categories",
-# AGE ~ "Age, y",
-# FEMALE ~ "Sex",
-# RACE ~ "Race",
-# charlindex ~ "Charlson comorbidity index",
-# ZIPINC_QRTL ~ "Residential income",
-# Insurance ~ "Expected primary payer",
-# Hosp_Census_Region ~ "Hospital region",
-# HOSP_BEDSIZE ~ "Hospital bedsize",
-# HOSP_LOCTEACH ~ "Hospital location and teaching status",
-# HTN ~ "Hypertension",
-# DM ~ "Diabetes mellitus",
-# Hyperlip~ "Hyperlipidemia",
-# CAD ~ "Coronary artery disease",
-# PVD ~ "Peripheral vascular disease",
-# CHF ~ "Heart failure",
-# CKD ~ "Chronic kidney disease",
-# COPD ~ "Chronic obstructive pulmonary disease",
-# Dementia ~ "Dementia",
-# Liver_Dis ~ "Liver disease",
-# OSA ~ "Obstructive sleep apnea",
-# Anemia ~ "Anemia",
-# Alcohol ~ "Alcohol use disorder",
-# Obesity ~ "Obesity",
-# pStroke ~ "Prior stroke",
-# pCardiacSurg ~ "Prior cardiac surgery",
-# Pacemaker_defib ~ "Pacemaker/ICD",
-# Tobb ~ "Tobbacco use disorder"
-# )

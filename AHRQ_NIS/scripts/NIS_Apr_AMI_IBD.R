@@ -46,7 +46,7 @@ dta_clean <- dta_base |>
       .default = PAY1
     ),
     AMI = case_when(
-      str_detect(I10_DX1, isAMI_Pop) ~ "Yes",
+      str_detect(I10_DX1, isAMI) ~ "Yes",
       .default = "No"
     ),
     CKD = case_when(
@@ -54,10 +54,6 @@ dta_clean <- dta_base |>
       .default = "No"
     ),
     IBD = case_when(
-      str_detect(DX10_Combined, isIBD) ~ "Yes",
-      .default = "AMI without IBD"
-    ),
-    AMI_IBD = case_when(
       str_detect(DX10_Combined, isIBD) ~ "AMI with IBD",
       .default = "AMI without IBD"
     ),
@@ -73,15 +69,15 @@ dta_clean <- dta_base |>
       (ynel10 == "Yes" | ynel11 == "Yes") ~ "Yes",
       .default = "No"
     ),
-    CPD = Obesity = case_when(
+    CPD = case_when(
       ynel9 == "Yes" ~ "Yes",
       .default = "No"
     ),
-    LiverDis = CPD = Obesity = case_when(
+    LiverDis = case_when(
       ynel14 == "Yes" ~ "Yes",
       .default = "No"
     ),
-    PVD = CPD = Obesity = case_when(
+    PVD = case_when(
       ynel5 == "Yes" ~ "Yes",
       .default = "No"
     ),
@@ -153,8 +149,16 @@ dta_clean <- dta_base |>
       str_detect(DX10_Combined, isStroke) ~ "Yes",
       .default = "No"
     ),
-    MACE = case_when(
-      (Stroke == "Yes" | DIED == "Yes" | SubsequentAMI == "Yes" | CABGProcedure == "Yes" | PCIProcedure == "Yes") ~ "Yes",
+    TIA = case_when(
+      str_detect(DX10_Combined, isTransientIschemicAttack) ~ "Yes",
+      .default = "No"
+    ),
+    PostMIComplications = case_when(
+      str_detect(DX10_Combined, isPostMIComplications) ~ "Yes",
+      .default = "No"
+    ),
+    MACCE = case_when(
+      (Stroke == "Yes" | TIA == "Yes" | PostMIComplications == "Yes") ~ "Yes",
       .default = "No"
     ),
     ObstructiveSleepApnea = case_when(
@@ -164,7 +168,55 @@ dta_clean <- dta_base |>
     Cancer = case_when(
       ynch14 == "Yes" ~ "Yes",
       .default = "No"
-    )
+    ),
+    Dementia = case_when(
+      ynch5 == "Yes" ~ "Yes",
+      .default = "No"
+      ),
+    CAD = case_when(
+      str_detect(DX10_Combined, isCAD) ~ "Yes",
+      .default = "No"
+    ),
+    Anemia = case_when(
+      str_detect(DX10_Combined, isAnemia) ~ "Yes",
+      .default = "No"
+    ),
+    Favorable_Discharge = case_when(
+      DISPUNIFORM %in% c("Routine discharge to home/self-care", "Home health care") ~ "Yes",
+      .default = "No"
+    ),
+    CoroanryAngio = case_when(
+      str_detect(PR10_Combined, isCoronaryAngiography) ~ "Yes",
+      .default = "No"
+    ),
+    MVent = case_when(
+      str_detect(PR10_Combined, isMechanicalVentilation) ~ "Yes",
+      .default = "No"
+    ),
+    MCS = case_when(
+      str_detect(PR10_Combined, isMechanicalCirculatorySupport) ~ "Yes",
+      .default = "No"
+    ),
+    AKI = case_when(
+      str_detect(DX10_Combined, isAcuteKidneyInjury) ~ "Yes",
+      .default = "No"
+    ),
+    Sepsis = case_when(
+      str_detect(DX10_Combined, isSepsis) ~ "Yes",
+      .default = "No"
+    ),
+    GIHemorrhage = case_when(
+      str_detect(DX10_Combined, isGIHemorrhage) ~ "Yes",
+      .default = "No"
+    ),
+    CrohnsDisease = case_when(
+      str_detect(DX10_Combined, isCrohnsDisease) ~ "Yes",
+      .default = "No"
+    ),
+    UlcerativeColitis = case_when(
+      str_detect(DX10_Combined, isUlcerativeColitis) ~ "Yes",
+      .default = "No"
+    ),
   ) |>
   select(
     # Base variables
@@ -185,6 +237,7 @@ dta_clean <- dta_base |>
     HOSP_BEDSIZE,
     HOSP_LOCTEACH,
     charlindex,
+    elixsum,
     ELECTIVE,
     grpci,
     Residence,
@@ -215,10 +268,26 @@ dta_clean <- dta_base |>
     CardiacArrest,
     SubsequentAMI,
     Stroke,
-    MACE,
     IBD,
     ObstructiveSleepApnea,
-    Cancer
+    Cancer,
+    MACCE,
+    PostMIComplications,
+    TIA,
+    Favorable_Discharge,
+    CAD,
+    Dementia,
+    Anemia,
+    CoroanryAngio,
+    MVent,
+    AKI,
+    Sepsis,
+    GIHemorrhage,
+    MCS,
+    TRAN_IN,
+    TRAN_OUT,
+    CrohnsDisease,
+    UlcerativeColitis
   )
 
 # Convert cleaned data to arrow dataset

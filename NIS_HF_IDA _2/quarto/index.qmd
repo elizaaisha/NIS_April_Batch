@@ -31,7 +31,7 @@ TESTING <- F
 if (TESTING) {
   dta <- arrow::open_dataset("./data/NIS_HF_IDA_testing.parquet") |> collect()
 } else {
-  dta <- arrow::open_dataset("./data/NIS_HF_IDA_2.parquet/") |> collect()
+  dta <- arrow::open_dataset("./data/NIS_HF_IDA_2_DX1.parquet/") |> collect()
 }
 
 # Set factor references

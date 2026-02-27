@@ -21,7 +21,7 @@ TESTING <- F
 if (TESTING) {
   dta <- arrow::open_dataset("./data/NIS_HF_IDA_testing.parquet") |> collect()
 } else {
-  dta <- arrow::open_dataset("./data/NIS_HF_IDA.parquet/") |> collect()
+  dta <- arrow::open_dataset("./data/NIS_HF_IDA_2_DX1.parquet/") |> collect()
 }
 
 # Set factor references
@@ -48,26 +48,26 @@ dsgn <- svydesign(
 )
 
 # Subset data for specific condition
-dsgn <- subset(dsgn, IDA == "Yes" & !is.na(HF) & !is.na(HF_Categories) & AGE > 18)
+dsgn <- subset(dsgn, IDA == "Yes" & HF == "Yes" & !is.na(HF_Categories) & AGE > 18)
 
 # Clean up memory
 rm(dta)
 gc()
 
 
-# Create baseline table
-tbl_svybaseline <- dsgn %>%
-  tbl_svysummary(
-    by = HF_Categories,
-    include = baseline_var,
-    label = baseline_var_labels,
-    statistic = list(all_continuous() ~ "{mean} ({sd})"),
-    missing = "no"
-  ) %>%
-  add_p()
-
-# Print baseline table
-tbl_svybaseline
+# # Create baseline table
+# tbl_svybaseline <- dsgn %>%
+#   tbl_svysummary(
+#     by = HF_Categories,
+#     include = baseline_var,
+#     label = baseline_var_labels,
+#     statistic = list(all_continuous() ~ "{mean} ({sd})"),
+#     missing = "no"
+#   ) %>%
+#   add_p()
+#
+# # Print baseline table
+# tbl_svybaseline
 
 # Create outcomes table
 tbl_svyoutcomes <- dsgn %>%

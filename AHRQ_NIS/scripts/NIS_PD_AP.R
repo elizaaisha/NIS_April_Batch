@@ -31,10 +31,9 @@ dta_base <- fn_NIS_base_data_clean(datasets)
 dta_clean <- dta_base |>
   mutate(
     PD = case_when(
-      str_detect(DX10_Combined, "G20\\d*") ~ "Yes", # Exact match for Parkinson's disease
+      str_detect(DX10_Combined, "G20.*") ~ "Yes", # Exact match for Parkinson's disease
       .default = "No"
     ),
-
     AP = case_when(
       str_detect(DX10_Combined, "J690") ~ "Yes", # Exact match for aspiration pneumonia
       .default = "No"
@@ -94,21 +93,14 @@ dta_clean <- dta_base |>
       .default = "No"
     ),
     Sepsis = case_when(str_detect(DX10_Combined, "A021|A207|A227|A267|A327|A392|A393|A394|A40\\d*|A41\\d*|A427|A5486|B007|B377|I76|O0337|O0387|O0487|O0737|O0887|O85|O8604|P36\\d*|R6520|R6521|T8112XA|T8144XA") ~ "Yes", .default = "No"),
-    MVent = case_when(str_detect(DX10_Combined, "5A0955Z|5A0945Z|5A0935Z|5A1935Z|5A1945Z|5A1955Z") ~ "Yes", .default = "No"),
-    Disp_home = case_when(DISPUNIFORM == 1 ~ "Yes", .default = "No"),
-    Disp_short = case_when(DISPUNIFORM == 2 ~ "Yes", .default = "No"),
-    Disp_long = case_when(DISPUNIFORM == 5 ~ "Yes", .default = "No"),
-    Disp_home_health = case_when(DISPUNIFORM == 6 ~ "Yes", .default = "No"),
-    Favorable_Discharge = case_when(
-      DISPUNIFORM %in% c(1, 6) ~ "Yes",
+    MVent = case_when(str_detect(PR10_Combined, "5A0955Z|5A0945Z|5A0935Z|5A1935Z|5A1945Z|5A1955Z") ~ "Yes", .default = "No"),
+    Disp_short = case_when(DISPUNIFORM == "Transfer to short-term hospital" ~ "Yes", .default = "No"),
+    Disp_long = case_when(DISPUNIFORM == "Transfer to skilled nursing facility, intermediate care, or another facility" ~ "Yes", .default = "No"),
+    Disp_home = case_when(
+      DISPUNIFORM %in% c("Routine discharge to home/self-care", "Home health care") ~ "Yes",
       .default = "No"
     ),
     Fluid_disorders = case_when(ynel24 == "Yes" ~ "Yes", .default = "No")
-    # DISPUNIFORM = case_when(
-    #   DISPUNIFORM == 1 ~ "Home discharge",
-    #   DISPUNIFORM == 2 ~ "Transfer to short‐term hospital",
-    #   DISPUNIFORM == 5 ~ "s",
-    #   DISPUNIFORM == 6 ~ "Transfer to home health")
   ) |>
   select(
     YEAR,
@@ -162,10 +154,10 @@ dta_clean <- dta_base |>
     Disp_home,
     Disp_short,
     Disp_long,
-    Disp_home_health,
-    Favorable_Discharge,
     elixsum,
-    Fluid_disorders
+    Fluid_disorders,
+    DISPUNIFORM,
+    PL_NCHS
   )
 
 # Convert cleaned data to arrow dataset

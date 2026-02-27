@@ -30,8 +30,8 @@ dta_base <- fn_NIS_base_data_clean(datasets)
 
 dta_clean <- dta_base |>
   mutate(
-    CA = case_when(ynch14 == "Yes" ~ "Yes", .default = "No"),
-    A_Fib = case_when(afib == 1 ~ "Yes", .default = "No"),
+    CA = case_when(str_detect(DX10_Combined, "C.*") ~ "Yes", .default = "No"),
+    A_Fib = case_when(str_detect(DX10_Combined, "I480.*|I481.*|I482.*") ~ "Yes", .default = "No"),
     CA_Afib = case_when(
       CA == "Yes" & A_Fib == "Yes" ~ "Atrial Fibrillation with Cancer",
       CA == "No" & A_Fib == "Yes" ~ "Atrial Fibrillation without Cancer"
@@ -71,15 +71,54 @@ dta_clean <- dta_base |>
     Anemia = case_when(ynel25 == "Yes" | ynel26 == "Yes" ~ "Yes", .default = "No"),
     Alcohol = case_when(ynel27 == "Yes" ~ "Yes", .default = "No"),
     Obesity = case_when(ynel22 == "Yes" ~ "Yes", .default = "No"),
+    Smoker = case_when(str_detect(DX10_Combined, "F17210 | F17213 | F17218 | F17219 | Z720") ~ "Yes", .default = "No"),
+    VHD = case_when(ynel3 == "Yes" ~ "Yes", .default = "No"),
     pStroke = case_when(str_detect(DX10_Combined, "Z8673") | str_detect(DX10_Combined, "I693\\d*") ~ "Yes", .default = "No"),
     pCardiacSurg = case_when(str_detect(DX10_Combined, "Z95[1-4]") ~ "Yes", .default = "No"),
     Pacemaker_defib = case_when(str_detect(DX10_Combined, "Z950") | str_detect(DX10_Combined, "Z95810") ~ "Yes", TRUE ~ "No"),
     Tobb = case_when(str_detect(DX10_Combined, "Z720\\d*") ~ "Yes", .default = "No"),
-    AMI = case_when(str_detect(I10_DX1, "1214\\d*|I21[0-3]\\d*|I22[0-1]\\d*|I22[8-9]\\d*") ~ "Yes", .default = "No"),
-    VTE = case_when(str_detect(DX10_Combined, "I82\\d*") ~ "Yes", .default = "No"),
+    AMI = case_when(str_detect(DX10_Combined, "1214\\d*|I21[0-3]\\d*|I22[0-1]\\d*|I22[8-9]\\d*") ~ "Yes", .default = "No"),
+    VTE = case_when(str_detect(DX10_Combined, "I82\\d*|I26\\d*") ~ "Yes", .default = "No"),
     AIS = case_when(str_detect(DX10_Combined, "163\\d*") ~ "Yes", .default = "No"),
-    MB = case_when(str_detect(DX10_Combined, "I(6[129]|85|92)\\d*|K(2[25-79]|5[017]|[69]2)\\d*") ~ "Yes", .default = "No"),
-    PE = case_when(str_detect(I10_DX1, "I26\\d*") ~ "Yes", .default = "No")
+    MB = case_when(str_detect(DX10_Combined, "K920.*|K921.*|K922.*|K250.*|K252.*|K254.*|K256.*|K260.*|K262.*|K264.*|K266.*|K270.*|K272.*|K27.*|K276.*|K280.*|K282.*|K284.*|K286.*|K2901.*|K2921.*|K2931.*|K2941.*|K2951.*|K2961.*|K2971.*|K2981.*|K2991.*|R31.*|R04.*|K661.*|I60.*|I61.*|I62.*") ~ "Yes", .default = "No"),
+    # PE = case_when(str_detect(DX10_Combined, "I26\\d*") ~ "Yes", .default = "No"),
+    CatheterAblation = case_when(str_detect(PR10_Combined, "02583ZZ|025S3ZZ|025T3ZZ|02563ZZ|02573ZZ|02553ZZ") ~ "Yes", .default = "No"),
+    Cancer_type = case_when(
+
+      str_detect(DX10_Combined, "C73\\d*") ~ "Thyroid",
+
+      str_detect(DX10_Combined, "C0[0-9]\\d*|C1[0-4]\\d*|C69\\d*|C3[0-2]\\d*") ~ "Head and neck",
+
+      str_detect(DX10_Combined, "C1[5-9]\\d*|C2[0-6]\\d*") ~ "Gastrointestinal tract",
+
+      str_detect(DX10_Combined, "C34\\d*") ~ "Lung",
+
+      str_detect(DX10_Combined, "C4[0-1]\\d*") ~ "Bone and articular cartilage",
+
+      str_detect(DX10_Combined, "C4[5-9]\\d*") ~ "Mesothelium and soft tissue",
+
+      str_detect(DX10_Combined, "C50\\d*") ~ "Breast",
+
+      str_detect(DX10_Combined, "C5[1-8]\\d*|C6[0-3]\\d*") ~ "Genital organs",
+
+      str_detect(DX10_Combined, "C6[4-8]\\d*") ~ "Renal",
+
+      str_detect(DX10_Combined, "C7[0-2]\\d*") ~ "Central nervous system",
+
+      str_detect(DX10_Combined, "C7[A-B]\\d*") ~ "Neuroendocrine",
+
+      str_detect(DX10_Combined, "C81\\d*") ~ "Hodgkin Lymphoma",
+
+      str_detect(DX10_Combined, "C8[2-6]\\d*") ~ "Non-Hodgkin Lymphoma",
+
+      str_detect(DX10_Combined, "C9[1-6]\\d*") ~ "Leukemia",
+
+      str_detect(DX10_Combined, "C90\\d*") ~ "Multiple Myeloma",
+
+      str_detect(DX10_Combined, "C4[3-4]\\d*") ~ "Melanoma",
+
+      str_detect(DX10_Combined, "C33\\d*|C3[7-9]\\d*|C4A\\d*|C7[4-5]\\d*|C88\\d*|C96\\d*") ~ "Others",
+      .default = NA)
   ) |>
   select(
     YEAR,
@@ -125,7 +164,12 @@ dta_clean <- dta_base |>
     AIS,
     VTE,
     MB,
-    PE
+    Cancer_type,
+    PL_NCHS,
+    VHD,
+    Smoker,
+    CatheterAblation,
+    elixsum
   )
 
 # Convert cleaned data to arrow dataset

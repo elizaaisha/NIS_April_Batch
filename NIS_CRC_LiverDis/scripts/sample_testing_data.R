@@ -7,7 +7,7 @@ dta <- arrow::open_dataset("./nis_data/NIS_CRC_LiverDis.parquet")
 
 # Create smaller data sample for testing use
 dta_sample <- dta |>
-  filter(CRC_Resection == "Yes") |>
+  filter(Colectomy == "Yes" & ColorectalCancer == "Yes") |>
   slice_sample(n = 10000) |> compute()
 
 # Export sampled testing data

@@ -8,19 +8,20 @@ baseline_var <- c(
   "HOSP_REGION",
   "HOSP_BEDSIZE",
   "HOSP_LOCTEACH",
-  "charlindex",
+  "elixsum",
   "htn",
   "CKD",
   "obesity",
   "dm",
   "CPD",
   "LiverDis",
+  "Dementia",
   "PVD",
   "Hyperlipidemia",
   "CHF",
   "Cancer",
   "ObstructiveSleepApnea",
-  "Arrhythmia",
+  "Dementia",
   "ValvHD",
   "Smoking",
   "PriorStroke",
@@ -38,8 +39,9 @@ baseline_var_labels <- list(
   HOSP_REGION ~ "Hospital region",
   HOSP_BEDSIZE ~ "Hospital bedsize",
   HOSP_LOCTEACH ~ "Hospital location and teaching status",
-  charlindex ~ "Charlson comorbidity index",
+  elixsum ~ "Charlson comorbidity index",
   htn ~ "Hypertension",
+  Dementia ~ "Dementia",
   obesity ~ "Obesity",
   dm ~ "Diabetes Mellitus",
   CPD ~ "Chronic pulmonary disease",
@@ -50,9 +52,8 @@ baseline_var_labels <- list(
   ObstructiveSleepApnea ~ "Obstructive sleep apnea",
   CHF ~ "Congestive heart failure",
   Cancer ~ "Cancer",
-  Arrhythmia ~ "Arrhythmia",
+  Dementia ~ "Dementia",
   ValvHD ~ "Valvular heart disease",
-  Smoking ~ "Smoker",
   PriorStroke ~ "Prior stroke",
   PreviousPCI ~ "Prior PCI",
   PreviousCABG ~ "Prior CABG",
@@ -64,11 +65,10 @@ outcome_var <- c(
   "LOS",
   "adj_TOTCHG",
   "CardioShock",
-  "CardiacArrest",
   "Stroke",
+  "CardiacArrest",
   "PCIProcedure",
-  "CABGProcedure",
-  "MACE"
+  "CABGProcedure"
 )
 
 outcome_var_labels <- list(
@@ -78,10 +78,9 @@ outcome_var_labels <- list(
   CardioShock ~ "Cardiogenic shock",
   CardiacArrest ~ "Cardiac arrest",
   Stroke ~ "Stroke",
-  PCIProcedure ~ "Percutaneous coronary intervention",
-  CABGProcedure ~ "Coronary artery bypass grafting",
-  MACE ~ "Major adverse cardiovascular event"
-)
+  PCIProcedure ~ "Utilization of percutaneous coronary intervention",
+  CABGProcedure ~ "Utilization of coronary artery bypass grafting"
+  )
 
 reg_var_labels <- list(
   AGE ~ "Age, y",
@@ -93,9 +92,10 @@ reg_var_labels <- list(
   HOSP_REGION ~ "Hospital region",
   HOSP_BEDSIZE ~ "Hospital bedsize",
   HOSP_LOCTEACH ~ "Hospital location and teaching status",
-  charlindex ~ "Charlson comorbidity index",
+  elixsum ~ "Charlson comorbidity index",
   htn ~ "Hypertension",
   obesity ~ "Obesity",
+  Dementia ~ "Dementia",
   dm ~ "Diabetes Mellitus",
   CPD ~ "Chronic pulmonary disease",
   CKD ~ "Chronic kidney disease",
@@ -105,11 +105,10 @@ reg_var_labels <- list(
   ObstructiveSleepApnea ~ "Obstructive sleep apnea",
   CHF ~ "Congestive heart failure",
   Cancer ~ "Cancer",
-  Arrhythmia ~ "Arrhythmia",
+  Dementia ~ "Dementia",
   ValvHD ~ "Valvular heart disease",
   Smoking ~ "Smoker",
   PriorStroke ~ "Prior stroke",
   PreviousPCI ~ "Prior PCI",
-  PreviousCABG ~ "Prior CABG",
-  Smoking ~ "Smoker"
-)
+  PreviousCABG ~ "Prior CABG"
+  )
