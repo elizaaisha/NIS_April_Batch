@@ -33,7 +33,7 @@ source("./scripts/labels.R")
 #| include: false
 
 # Global options
-TESTING <- F
+TESTING <- T
 
 if (TESTING) {
   dta <- arrow::open_dataset(
@@ -56,7 +56,15 @@ dta <- dta |>
     adj_TOTCHG = as.numeric(adj_TOTCHG),
     AWEEKEND = fct_relevel(AWEEKEND, "Monday-Friday"),
     Mechanical_Ventilation = fct_relevel(Mechanical_Ventilation, "No"),
-    Favorable_Discharge = fct_relevel(Favorable_Discharge, "No")
+    Favorable_Discharge = fct_relevel(Favorable_Discharge, "No"),
+    CS = as.factor(CS),
+    Cardaic_arrest = as.factor(Cardaic_arrest),
+    AcuteKidneyInjury = as.factor(AcuteKidneyInjury),
+    GIHemorrhage = as.factor(GIHemorrhage),
+    Stroke = as.factor(Stroke),
+    Stroke_all = as.factor(Stroke_all),
+    Pulm_catheter = as.factor(Pulm_catheter),
+    AMI_type = as.factor(AMI_type)
     )
 
 # Set survey options for lonely PSUs
@@ -124,14 +132,26 @@ gc()
         -   Mechanical ventilation use
 
         -   Favorable discharge (discharge to home or home health; all other dispositions were classified as unfavorable)
+        
+        -   Cardiogenic Shock
+
+        -   Cardaic arrest
+        
+        -   Acute kidney injury
+
+        -   GI hemorrhage
+        
+        -   Stroke
+        
+        -   Pulmonary artery catheterization
 
 -   **Covariates for Adjustment:** All models adjusted for the following
 
-    -   **Demographic Factors:** Age (continuous), sex, race/ethnicity
+    -   **Demographic Factors:** Age, sex, race/ethnicity
 
     -   **Socioeconomic Factors:** Primary payer, ZIP code–based income quartile
 
-    -   **Clinical Factors:** Elixhauser comorbidity index, thrombolytic drugs given
+    -   **Clinical Factors:** Elixhauser comorbidity index, thrombolytic drugs given, type of acute myocardial infarction (STEMI or NSTEMI)
 
     -   **Hospital-Level Factors:** Hospital region, bed size, and teaching status
 
@@ -208,6 +228,7 @@ tbl_svyoutcomes
 reg_model <- svyglm(
   DIED ~
     AWEEKEND +
+    AMI_type +
     AGE +
     FEMALE +
     RACE +
@@ -237,6 +258,7 @@ tbl_regression(reg_model, exponentiate = T, label = reg_var_labels)
 reg_model <- svyglm(
   Mechanical_Ventilation ~
     AWEEKEND +
+    AMI_type +
     AGE +
     FEMALE +
     RACE +
@@ -266,6 +288,7 @@ tbl_regression(reg_model, exponentiate = T, label = reg_var_labels)
 reg_model <- svyglm(
   Favorable_Discharge ~
     AWEEKEND +
+    AMI_type +
     AGE +
     FEMALE +
     RACE +
@@ -285,6 +308,180 @@ tbl_regression(reg_model, exponentiate = T, label = reg_var_labels)
 
 ```
 
+### Cardiogenic Shock:
+
+```{r}
+#| label: reg_CS
+
+#Create the regression model
+reg_model_CS <- svyglm(
+  CS ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_CS, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Cardiac Arrest:
+
+```{r}
+#| label: reg_Cardaic_arrest
+
+#Create the regression model
+reg_model_Cardaic_arrest <- svyglm(
+  Cardaic_arrest ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_Cardaic_arrest, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Acute Kidney Injury:
+
+```{r}
+#| label: reg_AcuteKidneyInjury
+
+#Create the regression model
+reg_model_AcuteKidneyInjury <- svyglm(
+  AcuteKidneyInjury ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_AcuteKidneyInjury, exponentiate = T, label = reg_var_labels)
+
+```
+
+### GI Hemorrhage:
+
+```{r}
+#| label: reg_GIHemorrhage
+
+#Create the regression model
+reg_model_GIHemorrhage <- svyglm(
+  GIHemorrhage ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_GIHemorrhage, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Stroke:
+
+```{r}
+#| label: reg_Stroke
+
+#Create the regression model
+reg_model_Stroke <- svyglm(
+  Stroke_all ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_Stroke, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Pulmonary artery catheterization:
+
+```{r}
+#| label: reg_Pulm_catheter
+
+#Create the regression model
+reg_model_Pulm_catheter <- svyglm(
+  Pulm_catheter ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_Pulm_catheter, exponentiate = T, label = reg_var_labels)
+
+```
+
 ## Multivariable linear regression:
 
 ### Length of Stay:
@@ -297,6 +494,7 @@ tbl_regression(reg_model, exponentiate = T, label = reg_var_labels)
 reg_model <- svyglm(
   LOS ~
     AWEEKEND +
+    AMI_type +
     AGE +
     FEMALE +
     RACE +
@@ -326,6 +524,7 @@ tbl_regression(reg_model, exponentiate = F, label = reg_var_labels)
 reg_model <- svyglm(
   adj_TOTCHG ~
     AWEEKEND +
+    AMI_type +
     AGE +
     FEMALE +
     RACE +

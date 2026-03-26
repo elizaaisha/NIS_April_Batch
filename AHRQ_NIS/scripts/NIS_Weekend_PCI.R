@@ -48,6 +48,19 @@ dta_clean <- dta_base |>
       str_detect(I10_DX1, isAMI) ~ "Yes",
       .default = "No"
     ),
+    AMI_type = case_when(
+      str_detect(DX10_Combined, "I210.*|I211.*|I212.*|I213.*") ~ "STEMI",
+      str_detect(DX10_Combined, "I214.*") ~ "NSTEMI",
+      .default = NA
+    ),
+    STEMI = case_when(
+      str_detect(DX10_Combined, "I210.*|I211.*|I212.*|I213.*") ~ "Yes",
+      .default = "No"
+    ),
+    NSTEMI = case_when(
+      str_detect(DX10_Combined, "I214.*") ~ "Yes",
+      .default = "No"
+    ),
     CS = case_when(
       str_detect(DX10_Combined, isCardioShock) ~ "Yes",
       .default = "No"
@@ -87,6 +100,31 @@ dta_clean <- dta_base |>
     Favorable_Discharge = case_when(
       DISPUNIFORM %in% c("Routine discharge to home/self-care", "Home health care") ~ "Yes",
       .default = "No"
+    ),
+    Stroke = case_when(
+      str_detect(DX10_Combined, isIschemicStroke) ~ "Acute ischemic stroke",
+      str_detect(DX10_Combined, HemorrhagicStroke) ~ "Hemorrhagic stroke",
+      .default = "No"
+    ),
+    Stroke_all = case_when(
+      str_detect(DX10_Combined, isStroke) ~ "Yes",
+      .default = "No"
+    ),
+    AIS = case_when(
+      str_detect(DX10_Combined, isIschemicStroke) ~ "Yes",
+      .default = "No"
+    ),
+    Hemorrhagic_Stroke = case_when(
+      str_detect(DX10_Combined, HemorrhagicStroke) ~ "Yes",
+      .default = "No"
+    ),
+    Cardaic_arrest = case_when(
+      str_detect(DX10_Combined, "I46.*") ~ "Yes",
+      .default = "No"
+    ),
+    Pulm_catheter = case_when(
+      str_detect(PR10_Combined, Pulmonary_artery_catheterization) ~ "Yes",
+      .default = "No"
     )
   ) |>
   select(
@@ -120,6 +158,9 @@ dta_clean <- dta_base |>
     TRAN_OUT,
     APRDRG_Severity,
     AMI,
+    AMI_type,
+    STEMI,
+    NSTEMI,
     CS,
     Mechanical_Ventilation,
     # Intracranial_Hemorrhage,
@@ -129,7 +170,13 @@ dta_clean <- dta_base |>
     AcuteKidneyInjury,
     GIHemorrhage,
     Favorable_Discharge,
-    Thrombolytic_Drugs
+    Thrombolytic_Drugs,
+    Stroke,
+    Stroke_all,
+    AIS,
+    Hemorrhagic_Stroke,
+    Cardaic_arrest,
+    Pulm_catheter
   )
 
 # Convert cleaned data to arrow dataset
