@@ -30,10 +30,11 @@ source("./scripts/labels.R")
 
 ```{r}
 #| label: data_setup
+#| cache: true
 #| include: false
 
 # Global options
-TESTING <- T
+TESTING <- F
 
 if (TESTING) {
   dta <- arrow::open_dataset(
@@ -64,7 +65,19 @@ dta <- dta |>
     Stroke = as.factor(Stroke),
     Stroke_all = as.factor(Stroke_all),
     Pulm_catheter = as.factor(Pulm_catheter),
-    AMI_type = as.factor(AMI_type)
+    AMI_type = as.factor(AMI_type),
+    Sepsis = fct_relevel(Sepsis, "No"),
+    UTI = fct_relevel(UTI, "No"),
+    CABG = as.factor(CABG),
+    MCS = as.factor(MCS),
+    CoronaryArteryDissection = as.factor(CoronaryArteryDissection),
+    CoronaryArteryPerforation = as.factor(CoronaryArteryPerforation),
+    PostproceduralComplications = as.factor(PostproceduralComplications),
+    VentArrhythmia = as.factor(VentArrhythmia),
+    BloodTransfusion = as.factor(BloodTransfusion),
+    IABP = as.factor(IABP),
+    Hemodialysis = as.factor(Hemodialysis),
+    RecurrentAMI = as.factor(RecurrentAMI)
     )
 
 # Set survey options for lonely PSUs
@@ -144,6 +157,30 @@ gc()
         -   Stroke
         
         -   Pulmonary artery catheterization
+        
+        -   Sepsis
+        
+        -   Urinary tract infection
+        
+        -   Undergoing CABG
+        
+        -   Mechanical circulatory support
+        
+        -   Coronary artery dissection
+        
+        -   Coronary artery perforation
+        
+        -   Postprocedural complications
+        
+        -   Ventricular arrhythmia
+        
+        -   Blood transfusion
+        
+        -   Recurrent MI during the hospital stay
+        
+        -   Intra-aortic balloon pump
+        
+        -   Hemodialysis
 
 -   **Covariates for Adjustment:** All models adjusted for the following
 
@@ -177,6 +214,7 @@ gc()
 
 ```{r}
 #| label: baseline
+#| cache: true
 
 # Create baseline table
 tbl_svybaseline <- dsgn %>%
@@ -479,6 +517,354 @@ reg_model_Pulm_catheter <- svyglm(
 
 # Print regression table
 tbl_regression(reg_model_Pulm_catheter, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Sepsis:
+
+```{r}
+#| label: reg_Sepsis
+
+#Create the regression model
+reg_model_Sepsis <- svyglm(
+  Sepsis ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_Sepsis, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Urinary tract infection:
+
+```{r}
+#| label: reg__UTI
+
+#Create the regression model
+reg_model_UTI <- svyglm(
+  UTI ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_UTI, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Undergoing CABG:
+
+```{r}
+#| label: reg_CABG
+
+#Create the regression model
+reg_model_CABG <- svyglm(
+  CABG ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_CABG, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Mechanical circulatory support:
+
+```{r}
+#| label: reg_MCS
+
+#Create the regression model
+reg_model_MCS <- svyglm(
+  MCS ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_MCS, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Coronary artery dissection:
+
+```{r}
+#| label: reg_CoronaryArteryDissection
+
+#Create the regression model
+reg_model_CoronaryArteryDissection <- svyglm(
+  CoronaryArteryDissection ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_CoronaryArteryDissection, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Coronary artery perforation:
+
+```{r}
+#| label: reg_CoronaryArteryPerforation
+
+#Create the regression model
+reg_model_CoronaryArteryPerforation <- svyglm(
+  CoronaryArteryPerforation ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_CoronaryArteryPerforation, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Postprocedural complications:
+
+```{r}
+#| label: reg_PostproceduralComplications
+
+#Create the regression model
+reg_model_PostproceduralComplications <- svyglm(
+  PostproceduralComplications ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_PostproceduralComplications, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Ventricular arrhythmia:
+
+```{r}
+#| label: reg_VentArrhythmia
+
+#Create the regression model
+reg_model_VentArrhythmia <- svyglm(
+  VentArrhythmia ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_VentArrhythmia, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Blood transfusion:
+
+```{r}
+#| label: reg_BloodTransfusion
+
+#Create the regression model
+reg_model_BloodTransfusion <- svyglm(
+  BloodTransfusion ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_BloodTransfusion, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Recurrent MI:
+
+```{r}
+#| label: reg_RecurrentAMI
+
+#Create the regression model
+reg_model_RecurrentAMI <- svyglm(
+  RecurrentAMI ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_RecurrentAMI, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Intra-aortic balloon pump:
+
+```{r}
+#| label: reg_IABP
+
+#Create the regression model
+reg_model_IABP <- svyglm(
+  IABP ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_IABP, exponentiate = T, label = reg_var_labels)
+
+```
+
+### Hemodialysis:
+
+```{r}
+#| label: reg_Hemodialysis
+
+#Create the regression model
+reg_model_Hemodialysis <- svyglm(
+  Hemodialysis ~
+    AWEEKEND +
+    AMI_type +
+    AGE +
+    FEMALE +
+    RACE +
+    Thrombolytic_Drugs +
+    PAY1_alt +
+    ZIPINC_QRTL +
+    HOSP_REGION +
+    HOSP_BEDSIZE +
+    HOSP_LOCTEACH +
+    elixsum,
+  design = dsgn,
+  family = "quasibinomial"
+)
+
+# Print regression table
+tbl_regression(reg_model_Hemodialysis, exponentiate = T, label = reg_var_labels)
 
 ```
 

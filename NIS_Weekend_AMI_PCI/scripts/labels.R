@@ -10,7 +10,8 @@ baseline_var <-
     "HOSP_REGION",
     "HOSP_BEDSIZE",
     "HOSP_LOCTEACH",
-    "grpci"
+    "grpci",
+    "CoronaryAngiography"
   )
 
 baseline_var_labels <- list(
@@ -24,7 +25,8 @@ baseline_var_labels <- list(
   HOSP_REGION ~ "Hospital region",
   HOSP_BEDSIZE ~ "Hospital bedsize",
   HOSP_LOCTEACH ~ "Hospital location/teaching status",
-  grpci ~ "No. of comorbidities"
+  grpci ~ "No. of comorbidities",
+  CoronaryAngiography ~ "Coronary angiography"
 )
 
 outcome_var <- c(
@@ -38,7 +40,19 @@ outcome_var <- c(
   "AcuteKidneyInjury",
   "GIHemorrhage",
   "Stroke",
-  "Pulm_catheter"
+  "Pulm_catheter",
+  "Sepsis",
+  "UTI",
+  "CABG",
+  "MCS",
+  "CoronaryArteryDissection",
+  "CoronaryArteryPerforation",
+  "PostproceduralComplications",
+  "VentArrhythmia",
+  "BloodTransfusion",
+  "RecurrentAMI",
+  "IABP",
+  "Hemodialysis"
 )
 
 outcome_var_labels <- list(
@@ -52,7 +66,19 @@ outcome_var_labels <- list(
   AcuteKidneyInjury ~ "Acute kidney injury",
   GIHemorrhage ~ "GI hemorrhage",
   Stroke ~ "Stroke",
-  Pulm_catheter ~ "Pulmonary artery catheterization"
+  Pulm_catheter ~ "Pulmonary artery catheterization",
+  Sepsis ~ "Sepsis",
+  UTI ~ "Urinary tract infection",
+  CABG ~ "Undergoing CABG",
+  MCS ~ "Mechanical circulatory support",
+  CoronaryArteryDissection ~ "Coronary artery dissection",
+  CoronaryArteryPerforation ~ "Coronary artery perforation",
+  PostproceduralComplications ~ "Postprocedural complications",
+  VentArrhythmia ~ "Ventricular arrhythmia",
+  BloodTransfusion ~ "Blood transfusion",
+  RecurrentAMI ~ "Recurrent MI",
+  IABP ~ "Intra-aortic balloon pump",
+  Hemodialysis ~ "Hemodialysis"
 )
 
 reg_var_labels <- list(

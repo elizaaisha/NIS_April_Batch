@@ -69,10 +69,6 @@ dta_clean <- dta_base |>
       str_detect(PR10_Combined, isMechanicalVentilation) ~ "Yes",
       .default = "No"
     ),
-    # Intracranial_Hemorrhage = case_when(
-    #   str_detect(DX10_Combined, isIntracranialHemorrhage) ~ "Yes",
-    #   .default = "No"
-    # ),
     PCI = case_when(
       str_detect(PR10_Combined, isPCIProcedure) ~ "Yes",
       .default = "No"
@@ -102,9 +98,8 @@ dta_clean <- dta_base |>
       .default = "No"
     ),
     Stroke = case_when(
-      str_detect(DX10_Combined, isIschemicStroke) ~ "Acute ischemic stroke",
-      str_detect(DX10_Combined, HemorrhagicStroke) ~ "Hemorrhagic stroke",
-      .default = "No"
+      str_detect(DX10_Combined, isIschemicStroke) ~ "Ischemic stroke",
+      str_detect(DX10_Combined, HemorrhagicStroke) ~ "Hemorrhagic stroke"
     ),
     Stroke_all = case_when(
       str_detect(DX10_Combined, isStroke) ~ "Yes",
@@ -125,8 +120,64 @@ dta_clean <- dta_base |>
     Pulm_catheter = case_when(
       str_detect(PR10_Combined, Pulmonary_artery_catheterization) ~ "Yes",
       .default = "No"
+    ),
+    Sepsis = case_when(
+      str_detect(DX10_Combined, isSepsis) ~ "Yes",
+      .default = "No"
+    ),
+    UTI = case_when
+    (str_detect(DX10_Combined, UTI) ~ "Yes",
+      .default = "No"
+    ),
+    CoronaryAngiography = case_when(
+      str_detect(PR10_Combined, isCoronaryAngiography) ~ "Yes",
+      .default = "No"
+    ),
+    CABG = case_when(
+      str_detect(PR10_Combined, isCABGProcedure) ~ "Yes",
+      .default = "No"
+    ),
+    MCS = case_when(
+      str_detect(PR10_Combined, isMechanicalCirculatorySupport) ~ "Yes",
+      .default = "No"
+    ),
+    CoronaryArteryDissection = case_when(
+      str_detect(DX10_Combined, "I2542") ~ "Yes",
+      .default = "No"
+    ),
+    CoronaryArteryPerforation = case_when(
+      str_detect(DX10_Combined, "I9751") ~ "Yes",
+      .default = "No"
+    ), #Accidental puncture and laceration of a circulatory system organ or structure during a circulatory system procedure
+    PostproceduralComplications = case_when(
+      str_detect(DX10_Combined, "I97.*|T82.*") ~ "Yes",
+      .default = "No"
+    ),
+    VentArrhythmia = case_when(
+      str_detect(DX10_Combined, "I472.*|I490.*") ~ "Yes",
+      .default = "No"
+    ),
+    BloodTransfusion = case_when(
+      str_detect(PR10_Combined, isBloodTransfusion) ~ "Yes",
+      .default = "No"
+    ),
+    RecurrentAMI = case_when(
+      str_detect(DX10_Secondary, "I22.*") ~ "Yes",
+      .default = "No"
+    ),
+    IABP = case_when(
+      str_detect(PR10_Combined, isIABP) ~ "Yes",
+      .default = "No"
+    ),
+    # TempPacemaker = case_when(
+    #   str_detect(PR10_Combined, "5A12012") ~ "Yes",
+    #   .default = "No"
+    # ),
+    Hemodialysis = case_when(
+      str_detect(PR10_Combined, isDialysis) ~ "Yes",
+      .default = "No"
     )
-  ) |>
+      ) |>
   select(
     # Base variables
     YEAR,
@@ -176,7 +227,20 @@ dta_clean <- dta_base |>
     AIS,
     Hemorrhagic_Stroke,
     Cardaic_arrest,
-    Pulm_catheter
+    Pulm_catheter,
+    Sepsis,
+    UTI,
+    CoronaryAngiography,
+    CABG,
+    MCS,
+    CoronaryArteryDissection,
+    CoronaryArteryPerforation,
+    PostproceduralComplications,
+    VentArrhythmia,
+    BloodTransfusion,
+    RecurrentAMI,
+    IABP,
+    Hemodialysis
   )
 
 # Convert cleaned data to arrow dataset

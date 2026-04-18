@@ -9,6 +9,7 @@ library(dbplyr) # For DuckDB dplyr
 clean_NIS_base_data <- function(datasets) {
   # Define the vector columns
   icd_dx_columns <- paste0("I10_DX", 1:40)
+  icd_dx_columns_sec <- paste0("I10_DX", 2:40)
   icd_pr_columns <- paste0("I10_PR", 1:25)
   icd_pr_day_columns <- paste0("PRDAY", 2:25)
   elix_dx_columns <- paste0("ynel", 1:31)
@@ -20,6 +21,7 @@ clean_NIS_base_data <- function(datasets) {
     mutate(
       # Combine ICD DX & PR columns into one
       DX10_Combined = str_c(!!!syms(icd_dx_columns), sep = ", "),
+      DX10_Secondary = str_c(!!!syms(icd_dx_columns_sec), sep = ", "),
       PR10_Combined = str_c(!!!syms(icd_pr_columns), sep = ", "),
       # Admission information
       AWEEKEND = case_when(
